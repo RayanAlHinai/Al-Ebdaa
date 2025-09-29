@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>بوابة الإبداع</title>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    body {
+      font-family: Tahoma, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+
+
+    .news-slider {
+      display: flex;
+      overflow-x: auto;
+      gap: 15px;
+      padding: 15px;
+      background: #eee;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+    .news-card {
+      min-width: 250px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+      padding: 10px;
+      text-align: right;
+      position: relative;
+    }
+    .news-card img {
+      width: 100%;
+      border-radius: 6px;
+    }
+    .news-card h3 {
+      margin: 10px 0 5px;
+    }
+    .news-card p {
+      font-size: 14px;
+      color: #555;
+    }
+    .remove-btn {
+      position: absolute;
+      top: 5px;
+      left: 10px;
+      color: red;
+      cursor: pointer;
+      font-size: 20px;
+      display: none;
+    }
+
+    /* زر تعديل الأخبار */
+    #editNewsBtn {
+      background: #c09bd2;
+      color: white;
+      padding: 8px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+    #editNewsBtn:hover {
+      background: #9b75ad;
+    }
+
+    /* فورم إضافة خبر */
+    #editForm {
+      display: none;
+      margin-top: 20px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 15px;
+      border-radius: 8px;
+    }
+    #editForm input, 
+    #editForm textarea {
+      width: 80%;
+      max-width: 400px;
+      padding: 8px;
+      margin: 5px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    #editForm button {
+      background: #22c55e;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #editForm button:hover {
+      background: #16a34a;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo-left">
+    <img src="assets/logo2.png" alt="Left Logo" class="logo-left">
+  </div>
+
+  <div class="logo-right">
+    <img src="assets/logo1.png" alt="Right Logo" class="logo-right">
+  </div>
+  <header>
+    
+    <h1>بوابة الإبداع</h1>
+    <p>منصة المدرسة لعرض المواهب والإنجازات</p>
+  </header>
+
+  <nav>
+    <a href="talents.html">المواهب</a>
+    <a href="parents.html">همسات لولي الأمر</a>
+    <a href="rules.html">قوانين اللائحة</a>
+    <a href="library.html">المكتبة الإلكترونية</a>
+    <a href="achievements.html">إنجازات المدرسة</a>
+  </nav>
+
+  <section class="main-bg">
+    <div class="overlay">
+      <div class="intro">
+        <h2>أهلاً بكم في بوابة الإبداع</h2>
+      </div>
+
+      <h2 style="display:flex; justify-content:space-between; align-items:center;">
+        📰 الأخبار
+        <button id="editNewsBtn" class="small-btn">✏️ تعديل الأخبار</button>
+      </h2>
+      
+      <div class="news-slider" id="newsContainer"></div>
+
+      <!-- فورم إضافة الأخبار -->
+      <div id="editForm">
+        <h3>إضافة خبر جديد</h3>
+        <input type="text" id="newsTitle" placeholder="عنوان الخبر"><br>
+        <textarea id="newsContent" placeholder="محتوى الخبر"></textarea><br>
+        <input type="file" id="newsImage" accept="image/*"><br>
+        <button type="button" id="addNewsBtn">📤 رفع وإضافة الخبر</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2025 بوابة الإبداع - جميع الحقوق محفوظة</p>
+  </footer>
+
+  <script>
+    const ADMIN_PASS = "Admin_2002";
+    const NEWS_KEY = "bawabatalibda3_news";
+
+    const newsContainer = document.getElementById("newsContainer");
+    const editNewsBtn = document.getElementById("editNewsBtn");
+    const editForm = document.getElementById("editForm");
+    const newsTitle = document.getElementById("newsTitle");
+    const newsContent = document.getElementById("newsContent");
+    const newsImage = document.getElementById("newsImage");
+    const addNewsBtn = document.getElementById("addNewsBtn");
+
+    let newsData = JSON.parse(localStorage.getItem(NEWS_KEY) || "[]");
+    let editMode = false;
+
+    renderNews();
+
+    function renderNews() {
+      newsContainer.innerHTML = "";
+      newsData.forEach((news, index) => {
+        const card = document.createElement("div");
+        card.className = "news-card";
+
+        let imgTag = news.image ? `<img src="${news.image}" alt="صورة الخبر">` : "";
+        card.innerHTML = `
+          ${imgTag}
+          <h3>${news.title}</h3>
+          <p>${news.content}</p>
+          <span class="remove-btn" data-index="${index}">🗑</span>
+        `;
+        if (editMode) {
+          card.querySelector(".remove-btn").style.display = "block";
+          card.querySelector(".remove-btn").onclick = () => {
+            newsData.splice(index, 1);
+            saveNews();
+            renderNews();
+          };
+        }
+        newsContainer.appendChild(card);
+      });
+    }
+
+    function saveNews() {
+      localStorage.setItem(NEWS_KEY, JSON.stringify(newsData));
+    }
+
+    editNewsBtn.addEventListener("click", () => {
+      const pass = prompt("أدخل كلمة المرور للتعديل:");
+      if (pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
+      editMode = true;
+      editForm.style.display = "block";
+      renderNews();
+    });
+
+    addNewsBtn.addEventListener("click", () => {
+      const title = newsTitle.value.trim();
+      const content = newsContent.value.trim();
+
+      if (!title || !content) return alert("⚠️ الرجاء إدخال عنوان الخبر ومحتواه");
+
+      let imageData = "";
+      if (newsImage.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imageData = e.target.result;
+          saveNewItem(title, content, imageData);
+        };
+        reader.readAsDataURL(newsImage.files[0]);
+      } else {
+        saveNewItem(title, content, "");
+      }
+    });
+
+    function saveNewItem(title, content, image) {
+      newsData.push({ title, content, image });
+      newsTitle.value = "";
+      newsContent.value = "";
+      newsImage.value = "";
+      saveNews();
+      renderNews();
+      alert("✅ تم إضافة الخبر بنجاح!");
+    }
+  </script>
+</body>
+</html>

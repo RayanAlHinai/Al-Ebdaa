@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>المواهب</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .small-btn { padding:5px 10px; border-radius:5px; cursor:pointer; }
+    #editTalentForm { display:none; margin-top:10px; }
+    #editTalentForm input, #editTalentForm textarea { width: 80%; padding:8px; margin-bottom:8px; display:block; font-size:16px; }
+    #editTalentForm button { padding:10px 20px; font-size:16px; }
+  
+    .card {
+      border: 2px solid #ccc;
+      padding: 20px;
+      margin:15px;
+      border-radius:15px;
+      display:inline-block;
+      width: 500px;         /* much bigger card */
+      height: auto;
+      text-align: center;
+      font-size: 20px;      /* bigger text */
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      vertical-align: top;
+    }
+  
+    .card img {
+      width: 100%;          /* fill card width */
+      max-height: 400px;    /* much taller image */
+      object-fit: cover;    /* keep aspect ratio */
+      margin-top: 15px;
+      border-radius: 15px;
+    }
+  
+    .remove-btn { margin-left:10px; cursor:pointer; color:red; font-size:20px; }
+  </style>
+  
+  
+</head>
+<body>
+  <div class="logo-left">
+    <img src="assets/logo2.png" alt="Left Logo">
+  </div>
+  <div class="logo-right">
+    <img src="assets/logo1.png" alt="Right Logo">
+  </div>
+
+  <header>
+    <h1>🌟 المواهب</h1>
+  </header>
+
+  <nav>
+    <a href="index.html">الرئيسية</a>
+    <a href="parents.html">همسات لولي الأمر</a>
+    <a href="rules.html">قوانين اللائحة</a>
+    <a href="library.html">المكتبة الإلكترونية</a>
+    <a href="achievements.html">إنجازات المدرسة</a>
+  </nav>
+
+  <section>
+    <h2 style="display:flex; justify-content:space-between; align-items:center;">
+      عرض مواهب الطلبة
+      <button id="editTalentBtn" class="small-btn">✏️ تعديل المحتوى</button>
+    </h2>
+
+    <div class="grid" id="talentsContent"></div>
+
+    <div id="editTalentForm">
+      <input type="text" id="talentTitle" placeholder="عنوان الموهبة">
+      <textarea id="talentContent" placeholder="وصف الموهبة"></textarea>
+      <input type="file" id="talentImage" accept="image/*">
+      <button id="saveTalentBtn">📤 رفع وإضافة الموهبة</button>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2025 بوابة الإبداع</p>
+  </footer>
+
+  <script>
+    const ADMIN_PASS = "Admin_2002";
+    const TALENTS_KEY = "bawabatalibda3_talents";
+
+    const talentsContent = document.getElementById("talentsContent");
+    const editBtn = document.getElementById("editTalentBtn");
+    const editForm = document.getElementById("editTalentForm");
+    const talentTitle = document.getElementById("talentTitle");
+    const talentContent = document.getElementById("talentContent");
+    const talentImage = document.getElementById("talentImage");
+    const saveTalentBtn = document.getElementById("saveTalentBtn");
+
+    let talents = JSON.parse(localStorage.getItem(TALENTS_KEY) || "[]");
+
+    if (talents.length) renderTalents();
+
+    function renderTalents() {
+      talentsContent.innerHTML = "";
+      talents.forEach((talent, i) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h3>${talent.title}</h3>
+          <p>${talent.content}</p>
+          ${talent.image ? `<img src="${talent.image}" alt="${talent.title}" style="max-width:250px;">` : ""}
+        `;
+
+        if (editForm.style.display === "block") {
+          const delBtn = document.createElement("span");
+          delBtn.textContent = "🗑";
+          delBtn.className = "remove-btn";
+          delBtn.onclick = () => {
+            talents.splice(i, 1);
+            saveTalents();
+            renderTalents();
+          };
+          card.appendChild(delBtn);
+        }
+
+        talentsContent.appendChild(card);
+      });
+    }
+
+    function saveTalents() {
+      localStorage.setItem(TALENTS_KEY, JSON.stringify(talents));
+    }
+
+    editBtn.addEventListener("click", () => {
+      const pass = prompt("أدخل كلمة المرور للتعديل:");
+      if (pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
+      editForm.style.display = "block";
+      renderTalents();
+    });
+
+    saveTalentBtn.addEventListener("click", () => {
+      const title = talentTitle.value.trim();
+      const content = talentContent.value.trim();
+      if (!title || !content) return alert("الرجاء إدخال عنوان الموهبة ووصفها");
+
+      // Handle image as base64
+      if (talentImage.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          talents.push({ title, content, image: e.target.result });
+          talentTitle.value = "";
+          talentContent.value = "";
+          talentImage.value = "";
+          saveTalents();
+          renderTalents();
+        }
+        reader.readAsDataURL(talentImage.files[0]);
+      } else {
+        talents.push({ title, content, image: "" });
+        talentTitle.value = "";
+        talentContent.value = "";
+        saveTalents();
+        renderTalents();
+      }
+    });
+  </script>
+</body>
+</html>

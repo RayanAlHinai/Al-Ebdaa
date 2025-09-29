@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>إنجازات المدرسة</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .small-btn { padding:5px 10px; border-radius:5px; cursor:pointer; }
+    #editAchievementsForm { display:none; margin-top:10px; }
+    #editAchievementsForm input, #editAchievementsForm textarea {
+      width: 80%; padding:5px; margin-bottom:5px; display:block;
+    }
+    #achievementsContent { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+    .card { padding:10px; border:1px solid #ccc; border-radius:5px; position:relative; }
+    .remove-btn { position:absolute; top:5px; left:5px; cursor:pointer; color:red; font-weight:bold; }
+  </style>
+</head>
+<body>
+  <div class="logo-left">
+    <img src="assets/logo2.png" alt="Left Logo">
+  </div>
+  <div class="logo-right">
+    <img src="assets/logo1.png" alt="Right Logo">
+  </div>
+
+  <header>
+    <h1>🏆 إنجازات المدرسة</h1>
+  </header>
+
+  <nav>
+    <a href="index.html">الرئيسية</a>
+    <a href="talents.html">المواهب</a>
+    <a href="parents.html">همسات لولي الأمر</a>
+    <a href="rules.html">قوانين اللائحة</a>
+    <a href="library.html">المكتبة الإلكترونية</a>
+  </nav>
+
+  <section>
+    <h2 style="display:flex; justify-content:space-between; align-items:center;">
+      نجاحاتنا
+      <button id="editAchievementsBtn" class="small-btn">✏️ تعديل المحتوى</button>
+    </h2>
+
+    <div class="grid" id="achievementsContent"></div>
+
+    <!-- Achievements edit form -->
+    <div id="editAchievementsForm">
+      <input type="text" id="achievementTitle" placeholder="عنوان الإنجاز">
+      <textarea id="achievementContent" placeholder="وصف الإنجاز"></textarea>
+      <input type="file" id="achievementImage" accept="image/*">
+      <button type="button" id="saveAchievementsBtn">📤 رفع وإضافة الإنجاز</button>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2025 بوابة الإبداع</p>
+  </footer>
+
+  <script>
+    const ADMIN_PASS = "Admin_2002";
+    const ACHIEVEMENTS_KEY = "bawabatalibda3_achievements";
+
+    const achievementsContent = document.getElementById("achievementsContent");
+    const editBtn = document.getElementById("editAchievementsBtn");
+    const editForm = document.getElementById("editAchievementsForm");
+    const titleInput = document.getElementById("achievementTitle");
+    const contentInput = document.getElementById("achievementContent");
+    const imageInput = document.getElementById("achievementImage");
+    const saveBtn = document.getElementById("saveAchievementsBtn");
+
+    let achievements = JSON.parse(localStorage.getItem(ACHIEVEMENTS_KEY) || "[]");
+
+    function renderAchievements() {
+      achievementsContent.innerHTML = "";
+      achievements.forEach((ach, i) => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `<strong>${ach.title}</strong><p>${ach.content}</p>`;
+        if (ach.image) {
+          const img = document.createElement("img");
+          img.src = ach.image;
+          img.style.width = "100%";
+          img.style.marginTop = "5px";
+          div.appendChild(img);
+        }
+
+        if (editForm.style.display === "block") {
+          const delBtn = document.createElement("span");
+          delBtn.textContent = "🗑";
+          delBtn.className = "remove-btn";
+          delBtn.onclick = () => {
+            achievements.splice(i, 1);
+            saveAchievements();
+            renderAchievements();
+          };
+          div.appendChild(delBtn);
+        }
+
+        achievementsContent.appendChild(div);
+      });
+    }
+
+    function saveAchievements() {
+      localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(achievements));
+    }
+
+    editBtn.addEventListener("click", () => {
+      const pass = prompt("أدخل كلمة المرور للتعديل:");
+      if (pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
+      editForm.style.display = "block";
+      renderAchievements();
+    });
+
+    saveBtn.addEventListener("click", () => {
+      const title = titleInput.value.trim();
+      const content = contentInput.value.trim();
+      if (!title || !content) return alert("الرجاء إدخال عنوان ووصف الإنجاز");
+
+      // Handle image file as base64
+      if (imageInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          achievements.push({ title, content, image: e.target.result });
+          titleInput.value = "";
+          contentInput.value = "";
+          imageInput.value = "";
+          saveAchievements();
+          renderAchievements();
+        };
+        reader.readAsDataURL(imageInput.files[0]);
+      } else {
+        achievements.push({ title, content });
+        titleInput.value = "";
+        contentInput.value = "";
+        saveAchievements();
+        renderAchievements();
+      }
+    });
+
+    // Initial render
+    renderAchievements();
+  </script>
+</body>
+</html>
