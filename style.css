@@ -7,10 +7,27 @@ body {
 }
 
 header {
+  position: relative;
   background: #6b258e;
   color: white;
   padding: 70px;
   text-align: center;
+}
+
+.logo-left {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 180px;
+  width: auto;
+}
+
+.logo-right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 180px;
+  width: auto;
 }
 
 header h1 {
