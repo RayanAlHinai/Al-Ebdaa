@@ -16,7 +16,6 @@
   </style>
 </head>
 <body>
-
   <header>
     <img src="assets/logo2.png" alt="Left Logo" class="logo-left">
     <img src="assets/logo1.png" alt="Right Logo" class="logo-right">
@@ -52,28 +51,10 @@
     <p>© 2025 بوابة الإبداع</p>
   </footer>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
-    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDtZ20xX1ly8XnvvN4Q-LvP_YWXfQs3HlU",
-      authDomain: "alebdaa-e25be.firebaseapp.com",
-      projectId: "alebdaa-e25be",
-      storageBucket: "alebdaa-e25be.appspot.com",
-      messagingSenderId: "444943642971",
-      appId: "1:444943642971:web:fc1ce77de0a9c53d25ea7e",
-      measurementId: "G-2E6PLZ7LHJ"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    getAnalytics(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
+  <script>
     const ADMIN_PASS = "Admin_2002";
+    const ACHIEVEMENTS_KEY = "bawabatalibda3_achievements";
+
     const achievementsContent = document.getElementById("achievementsContent");
     const editBtn = document.getElementById("editAchievementsBtn");
     const editForm = document.getElementById("editAchievementsForm");
@@ -82,64 +63,77 @@
     const imageInput = document.getElementById("achievementImage");
     const saveBtn = document.getElementById("saveAchievementsBtn");
 
-    let editMode = false;
+    let achievements = JSON.parse(localStorage.getItem(ACHIEVEMENTS_KEY) || "[]");
+
+    function renderAchievements() {
+      achievementsContent.innerHTML = "";
+      achievements.forEach((ach, i) => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `<strong>${ach.title}</strong><p>${ach.content}</p>`;
+        if (ach.image) {
+          const img = document.createElement("img");
+          img.src = ach.image;
+          img.style.width = "100%";
+          img.style.marginTop = "5px";
+          div.appendChild(img);
+        }
+
+        if (editForm.style.display === "block") {
+          const delBtn = document.createElement("span");
+          delBtn.textContent = "🗑";
+          delBtn.className = "remove-btn";
+          delBtn.onclick = () => {
+            achievements.splice(i, 1);
+            saveAchievements();
+            renderAchievements();
+          };
+          div.appendChild(delBtn);
+        }
+
+        achievementsContent.appendChild(div);
+      });
+    }
+
+    function saveAchievements() {
+      localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(achievements));
+    }
 
     editBtn.addEventListener("click", () => {
       const pass = prompt("أدخل كلمة المرور للتعديل:");
       if (pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-      editMode = true;
       editForm.style.display = "block";
       renderAchievements();
     });
 
-    saveBtn.addEventListener("click", async () => {
+    saveBtn.addEventListener("click", () => {
       const title = titleInput.value.trim();
       const content = contentInput.value.trim();
       if (!title || !content) return alert("الرجاء إدخال عنوان ووصف الإنجاز");
 
-      let imageUrl = "";
+      // Handle image file as base64
       if (imageInput.files[0]) {
-        const file = imageInput.files[0];
-        const storageRef = ref(storage, `achievements_images/${Date.now()}_${file.name}`);
-        await uploadBytes(storageRef, file);
-        imageUrl = await getDownloadURL(storageRef);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          achievements.push({ title, content, image: e.target.result });
+          titleInput.value = "";
+          contentInput.value = "";
+          imageInput.value = "";
+          saveAchievements();
+          renderAchievements();
+        };
+        reader.readAsDataURL(imageInput.files[0]);
+      } else {
+        achievements.push({ title, content });
+        titleInput.value = "";
+        contentInput.value = "";
+        saveAchievements();
+        renderAchievements();
       }
-
-      await addDoc(collection(db, "achievements"), {
-        title, content, image: imageUrl, date: serverTimestamp()
-      });
-
-      titleInput.value = "";
-      contentInput.value = "";
-      imageInput.value = "";
-      alert("✅ تم إضافة الإنجاز بنجاح!");
     });
 
-    function renderAchievements() {
-      onSnapshot(collection(db, "achievements"), snapshot => {
-        achievementsContent.innerHTML = "";
-        snapshot.forEach(docSnap => {
-          const data = docSnap.data();
-          const div = document.createElement("div");
-          div.className = "card";
-          div.innerHTML = `<strong>${data.title}</strong><p>${data.content}</p>` +
-                          (data.image ? `<img src="${data.image}" style="width:100%;margin-top:5px;">` : "");
-
-          if (editMode) {
-            const delBtn = document.createElement("span");
-            delBtn.textContent = "🗑";
-            delBtn.className = "remove-btn";
-            delBtn.onclick = async () => { await deleteDoc(doc(db, "achievements", docSnap.id)); };
-            div.appendChild(delBtn);
-          }
-
-          achievementsContent.appendChild(div);
-        });
-      });
-    }
-
+    // Initial render
     renderAchievements();
   </script>
-
 </body>
 </html>
