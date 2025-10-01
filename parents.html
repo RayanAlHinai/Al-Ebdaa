@@ -50,5 +50,103 @@
 </footer>
 
 <script src="script.js"></script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
+
+  const ADMIN_PASS = "SuperSecret123";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
+    authDomain: "alebdaa3-934f1.firebaseapp.com",
+    projectId: "alebdaa3-934f1",
+    storageBucket: "alebdaa3-934f1.firebasestorage.app",
+    messagingSenderId: "847563462029",
+    appId: "1:847563462029:web:0938bbc4677cdfe44899c4",
+    measurementId: "G-2H247KW0NB"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+
+  // Expose functions globally for buttons
+  window.addNews = async function() {
+    const entered = prompt("Enter admin password:");
+    if (entered !== ADMIN_PASS) { alert("Wrong password!"); return; }
+    const val = document.getElementById("news-input")?.value.trim();
+    if (!val) return;
+    await addDoc(collection(db, "news"), { text: val });
+    document.getElementById("news-input").value = "";
+  };
+
+  window.addTalent = async function() {
+    const entered = prompt("Enter admin password:");
+    if (entered !== ADMIN_PASS) { alert("Wrong password!"); return; }
+    const val = document.getElementById("talents-input")?.value.trim();
+    if (!val) return;
+    await addDoc(collection(db, "talents"), { name: val });
+    document.getElementById("talents-input").value = "";
+  };
+
+  window.addAchievement = async function() {
+    const entered = prompt("Enter admin password:");
+    if (entered !== ADMIN_PASS) { alert("Wrong password!"); return; }
+    const title = document.getElementById("ach-title")?.value.trim();
+    const file = document.getElementById("ach-file")?.files[0];
+    if (!title || !file) return;
+
+    const storageRef = ref(storage, "achievements/" + file.name);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+
+    await addDoc(collection(db, "achievements"), { title, image: url });
+    document.getElementById("ach-title").value = "";
+    document.getElementById("ach-file").value = "";
+  };
+
+  // Subscribe realtime
+  document.addEventListener("DOMContentLoaded", () => {
+    const newsList = document.getElementById("news-list");
+    if (newsList) {
+      onSnapshot(collection(db, "news"), snapshot => {
+        newsList.innerHTML = "";
+        snapshot.forEach(doc => {
+          const li = document.createElement("li");
+          li.textContent = doc.data().text;
+          newsList.appendChild(li);
+        });
+      });
+    }
+
+    const talentsList = document.getElementById("talents-list");
+    if (talentsList) {
+      onSnapshot(collection(db, "talents"), snapshot => {
+        talentsList.innerHTML = "";
+        snapshot.forEach(doc => {
+          const li = document.createElement("li");
+          li.textContent = doc.data().name;
+          talentsList.appendChild(li);
+        });
+      });
+    }
+
+    const achList = document.getElementById("achievements-list");
+    if (achList) {
+      onSnapshot(collection(db, "achievements"), snapshot => {
+        achList.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const li = document.createElement("li");
+          li.innerHTML = `<img src="${data.image}" width="100"><p>${data.title}</p>`;
+          achList.appendChild(li);
+        });
+      });
+    }
+  });
+</script>
+
 </body>
 </html>
