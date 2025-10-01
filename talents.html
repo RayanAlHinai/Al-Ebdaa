@@ -81,83 +81,77 @@
   <p>© 2025 بوابة الإبداع</p>
 </footer>
 
-<script>
-const ADMIN_PASS = "Admin_2002";
-const TALENTS_KEY = "bawabatalibda3_talents";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
 
-const talentsContent = document.getElementById("talentsContent");
+const ADMIN_PASS = "SuperSecret123";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
+  authDomain: "alebdaa3-934f1.firebaseapp.com",
+  projectId: "alebdaa3-934f1",
+  storageBucket: "alebdaa3-934f1.appspot.com",
+  messagingSenderId: "847563462029",
+  appId: "1:847563462029:web:0938bbc4677cdfe44899c4"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
 const editBtn = document.getElementById("editTalentBtn");
 const editForm = document.getElementById("editTalentForm");
 const talentTitle = document.getElementById("talentTitle");
 const talentContent = document.getElementById("talentContent");
 const talentImage = document.getElementById("talentImage");
 const saveTalentBtn = document.getElementById("saveTalentBtn");
+const talentsContent = document.getElementById("talentsContent");
 
-let talents = JSON.parse(localStorage.getItem(TALENTS_KEY) || "[]");
-
-function renderTalents() {
+// Realtime talents from Firebase
+onSnapshot(collection(db, "talents"), snapshot => {
   talentsContent.innerHTML = "";
-  talents.forEach((talent, i) => {
+  snapshot.forEach(doc => {
+    const data = doc.data();
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
-      <h3>${talent.title}</h3>
-      <p>${talent.content}</p>
-      ${talent.image ? `<img src="${talent.image}" alt="${talent.title}">` : ""}
+      <h3>${data.title}</h3>
+      <p>${data.content}</p>
+      ${data.image ? `<img src="${data.image}" alt="${data.title}">` : ""}
     `;
-
-    const delBtn = document.createElement("span");
-    delBtn.textContent = "🗑";
-    delBtn.className = "remove-btn";
-    if(editForm.style.display === "block") delBtn.style.display = "inline";
-    delBtn.onclick = () => {
-      talents.splice(i,1);
-      saveTalents();
-      renderTalents();
-    };
-    card.appendChild(delBtn);
-
     talentsContent.appendChild(card);
   });
-}
+});
 
-function saveTalents() {
-  localStorage.setItem(TALENTS_KEY, JSON.stringify(talents));
-}
-
+// Admin edit
 editBtn.addEventListener("click", () => {
   const pass = prompt("أدخل كلمة المرور للتعديل:");
   if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
   editForm.style.display = "block";
-  renderTalents();
 });
 
-saveTalentBtn.addEventListener("click", () => {
+// Save new talent
+saveTalentBtn.addEventListener("click", async () => {
   const title = talentTitle.value.trim();
   const content = talentContent.value.trim();
   if(!title || !content) return alert("الرجاء إدخال عنوان الموهبة ووصفها");
 
+  let imageUrl = "";
   if(talentImage.files[0]){
-    const reader = new FileReader();
-    reader.onload = e => {
-      talents.push({ title, content, image: e.target.result });
-      talentTitle.value = "";
-      talentContent.value = "";
-      talentImage.value = "";
-      saveTalents();
-      renderTalents();
-    }
-    reader.readAsDataURL(talentImage.files[0]);
-  } else {
-    talents.push({ title, content, image: "" });
-    talentTitle.value = "";
-    talentContent.value = "";
-    saveTalents();
-    renderTalents();
+    const file = talentImage.files[0];
+    const storageRef = ref(storage, "talents/" + file.name);
+    await uploadBytes(storageRef, file);
+    imageUrl = await getDownloadURL(storageRef);
   }
-});
 
-renderTalents();
+  await addDoc(collection(db,"talents"), { title, content, image: imageUrl });
+  talentTitle.value = "";
+  talentContent.value = "";
+  talentImage.value = "";
+});
 </script>
+
 </body>
 </html>
