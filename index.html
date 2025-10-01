@@ -60,9 +60,27 @@ body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
 <p>© 2025 بوابة الإبداع - جميع الحقوق محفوظة</p>
 </footer>
 
-<script>
-const ADMIN_PASS = "Admin_2002";
-const NEWS_KEY = "bawabatalibda3_news";
+<!-- Firebase Module -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDRTlWqHzglLPRCmTUbI4sjtKIMlgaU-o4",
+    authDomain: "alebda-9977d.firebaseapp.com",
+    projectId: "alebda-9977d",
+    storageBucket: "alebda-9977d.appspot.com",
+    messagingSenderId: "104606094749",
+    appId: "1:104606094749:web:69cd876b5f865cdf27cb74",
+    measurementId: "G-V0DN6CSKK3"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+const ADMIN_PASS = "SuperSecret123";
 
 const newsContainer = document.getElementById("newsContainer");
 const editNewsBtn = document.getElementById("editNewsBtn");
@@ -72,129 +90,66 @@ const newsContentInput = document.getElementById("newsContentInput");
 const newsImageInput = document.getElementById("newsImageInput");
 const addNewsBtn = document.getElementById("addNewsBtn");
 
-let newsData = JSON.parse(localStorage.getItem(NEWS_KEY) || "[]");
 let editMode = false;
 
-renderNews();
-
-function renderNews() {
-  newsContainer.innerHTML = "";
-  newsData.forEach((news, index) => {
-    const card = document.createElement("div");
-    card.className = "news-card";
-
-    let imgTag = news.image ? `<img src="${news.image}" alt="صورة الخبر">` : "";
-    card.innerHTML = `${imgTag}<h3>${news.title}</h3><p>${news.content}</p><span class="remove-btn" data-index="${index}">🗑</span>`;
-    
-    const removeBtn = card.querySelector(".remove-btn");
-    if(editMode) {
-      removeBtn.style.display = "block";
-      removeBtn.onclick = () => {
-        newsData.splice(index,1);
-        saveNews();
-        renderNews();
-      };
-    }
-
-    newsContainer.appendChild(card);
-  });
-}
-
-function saveNews() {
-  localStorage.setItem(NEWS_KEY, JSON.stringify(newsData));
-}
-
-editNewsBtn.addEventListener("click", () => {
+// Toggle edit mode
+editNewsBtn.addEventListener("click", async () => {
   const pass = prompt("أدخل كلمة المرور للتعديل:");
   if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
   editMode = true;
   editForm.style.display = "block";
-  renderNews();
 });
 
-addNewsBtn.addEventListener("click", () => {
+// Add news
+addNewsBtn.addEventListener("click", async () => {
   const title = newsTitleInput.value.trim();
   const content = newsContentInput.value.trim();
+  const file = newsImageInput.files[0];
+
   if(!title || !content) return alert("⚠️ الرجاء إدخال عنوان الخبر ومحتواه");
 
-  if(newsImageInput.files[0]){
-    const reader = new FileReader();
-    reader.onload = function(e){
-      saveNewItem(title, content, e.target.result);
-    }
-    reader.readAsDataURL(newsImageInput.files[0]);
-  } else {
-    saveNewItem(title, content, "");
-  }
-});
-
-function saveNewItem(title, content, image){
-  newsData.push({title, content, image});
-  newsTitleInput.value="";
-  newsContentInput.value="";
-  newsImageInput.value="";
-  saveNews();
-  renderNews();
-  alert("✅ تم إضافة الخبر بنجاح!");
-}
-</script>
-
-<!-- Firebase Module -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
-
-const FIREBASE_ADMIN_PASS = "SuperSecret123";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
-  authDomain: "alebdaa3-934f1.firebaseapp.com",
-  projectId: "alebdaa3-934f1",
-  storageBucket: "alebdaa3-934f1.appspot.com",
-  messagingSenderId: "847563462029",
-  appId: "1:847563462029:web:0938bbc4677cdfe44899c4"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-// Save news to Firebase
-window.addNewsFirebase = async function(){
-  const pass = prompt("Enter admin password:");
-  if(pass !== FIREBASE_ADMIN_PASS) return alert("Wrong password!");
-  const title = newsTitleInput.value.trim();
-  const file = newsImageInput.files[0];
-  if(!title) return alert("Enter title");
-  
   let imageURL = "";
   if(file){
-    const storageRef = ref(storage, "news/" + file.name);
+    const storageRef = ref(storage, "news/" + Date.now() + "_" + file.name);
     await uploadBytes(storageRef, file);
     imageURL = await getDownloadURL(storageRef);
   }
 
-  await addDoc(collection(db,"news"),{title, image:imageURL});
+  await addDoc(collection(db, "news"), { title, content, image: imageURL, createdAt: Date.now() });
+
+  // Clear inputs
   newsTitleInput.value="";
   newsContentInput.value="";
   newsImageInput.value="";
-};
+});
 
-// Real-time update
-document.addEventListener("DOMContentLoaded",()=>{
-  onSnapshot(collection(db,"news"), snapshot=>{
-    snapshot.forEach(doc=>{
-      const data = doc.data();
-      const exists = Array.from(newsContainer.children).some(c=>c.querySelector('h3')?.textContent === data.title);
-      if(!exists){
-        const card = document.createElement("div");
-        card.className="news-card";
-        const imgTag = data.image ? `<img src="${data.image}" alt="صورة الخبر">` : "";
-        card.innerHTML = `${imgTag}<h3>${data.title}</h3>`;
-        newsContainer.appendChild(card);
-      }
-    });
+// Real-time news updates
+onSnapshot(collection(db, "news"), snapshot => {
+  newsContainer.innerHTML = "";
+  snapshot.docs.sort((a,b)=>b.data().createdAt - a.data().createdAt).forEach(docSnap => {
+    const data = docSnap.data();
+    const card = document.createElement("div");
+    card.className = "news-card";
+    const imgTag = data.image ? `<img src="${data.image}" alt="صورة الخبر">` : "";
+    card.innerHTML = `${imgTag}<h3>${data.title}</h3><p>${data.content}</p>`;
+
+    // Show remove button if editMode
+    if(editMode){
+      const removeBtn = document.createElement("span");
+      removeBtn.className = "remove-btn";
+      removeBtn.textContent = "🗑";
+      removeBtn.onclick = async () => {
+        if(data.image){
+          const imgRef = ref(storage, data.image);
+          try{ await deleteObject(imgRef); }catch(err){console.log("Image delete error", err);}
+        }
+        await deleteDoc(doc(db,"news",docSnap.id));
+      };
+      removeBtn.style.display = "block";
+      card.appendChild(removeBtn);
+    }
+
+    newsContainer.appendChild(card);
   });
 });
 </script>
