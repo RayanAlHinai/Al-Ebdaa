@@ -6,13 +6,9 @@
 <link rel="stylesheet" href="style.css">
 <style>
 body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
-.small-btn { padding:5px 10px; border-radius:5px; cursor:pointer; }
-#editForm { display:none; margin-top:10px; }
-#editForm input, #editForm textarea { width:80%; padding:5px; margin-bottom:5px; display:block; }
 .news-slider { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-.news-card { border:1px solid #ccc; padding:10px; border-radius:5px; position:relative; width:200px; }
+.news-card { border:1px solid #ccc; padding:10px; border-radius:5px; width:200px; }
 .news-card img { width:100%; height:auto; margin-bottom:5px; }
-.remove-btn { position:absolute; top:5px; left:5px; cursor:pointer; color:red; font-weight:bold; display:none; }
 </style>
 </head>
 <body>
@@ -38,21 +34,9 @@ body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
       <h2>أهلاً بكم في بوابة الإبداع</h2>
     </div>
 
-    <h2 style="display:flex; justify-content:space-between; align-items:center;">
-      📰 الأخبار
-      <button id="editNewsBtn" class="small-btn">✏️ تعديل الأخبار</button>
-    </h2>
+    <h2>📰 الأخبار</h2>
     
     <div class="news-slider" id="newsContainer"></div>
-
-    <!-- Add News Form -->
-    <div id="editForm">
-      <h3>إضافة خبر جديد</h3>
-      <input type="text" id="newsTitleInput" placeholder="عنوان الخبر">
-      <textarea id="newsContentInput" placeholder="محتوى الخبر"></textarea>
-      <input type="file" id="newsImageInput" accept="image/*">
-      <button type="button" id="addNewsBtn">📤 رفع وإضافة الخبر</button>
-    </div>
   </div>
 </section>
 
@@ -60,97 +44,34 @@ body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
 <p>© 2025 بوابة الإبداع - جميع الحقوق محفوظة</p>
 </footer>
 
-<!-- Firebase Module -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyDRTlWqHzglLPRCmTUbI4sjtKIMlgaU-o4",
-    authDomain: "alebda-9977d.firebaseapp.com",
-    projectId: "alebda-9977d",
-    storageBucket: "alebda-9977d.appspot.com",
-    messagingSenderId: "104606094749",
-    appId: "1:104606094749:web:69cd876b5f865cdf27cb74",
-    measurementId: "G-V0DN6CSKK3"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-const ADMIN_PASS = "SuperSecret123";
-
-const newsContainer = document.getElementById("newsContainer");
-const editNewsBtn = document.getElementById("editNewsBtn");
-const editForm = document.getElementById("editForm");
-const newsTitleInput = document.getElementById("newsTitleInput");
-const newsContentInput = document.getElementById("newsContentInput");
-const newsImageInput = document.getElementById("newsImageInput");
-const addNewsBtn = document.getElementById("addNewsBtn");
-
-let editMode = false;
-
-// Toggle edit mode
-editNewsBtn.addEventListener("click", async () => {
-  const pass = prompt("أدخل كلمة المرور للتعديل:");
-  if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-  editMode = true;
-  editForm.style.display = "block";
-});
-
-// Add news
-addNewsBtn.addEventListener("click", async () => {
-  const title = newsTitleInput.value.trim();
-  const content = newsContentInput.value.trim();
-  const file = newsImageInput.files[0];
-
-  if(!title || !content) return alert("⚠️ الرجاء إدخال عنوان الخبر ومحتواه");
-
-  let imageURL = "";
-  if(file){
-    const storageRef = ref(storage, "news/" + Date.now() + "_" + file.name);
-    await uploadBytes(storageRef, file);
-    imageURL = await getDownloadURL(storageRef);
+<script>
+// Example news data (you can add/remove here by code)
+const news = [
+  {
+    title: "افتتاح معرض الفنون",
+    content: "تم افتتاح معرض الفنون للطلاب في المدرسة اليوم.",
+    image: "assets/news1.jpg"
+  },
+  {
+    title: "مسابقة القراءة",
+    content: "شارك طلاب الصفوف المختلفة في مسابقة القراءة السنوية.",
+    image: "assets/news2.jpg"
+  },
+  {
+    title: "رحلة تعليمية",
+    content: "تم تنظيم رحلة تعليمية لطلاب الصف الخامس إلى المتحف الوطني.",
+    image: "assets/news3.jpg"
   }
+];
 
-  await addDoc(collection(db, "news"), { title, content, image: imageURL, createdAt: Date.now() });
-
-  // Clear inputs
-  newsTitleInput.value="";
-  newsContentInput.value="";
-  newsImageInput.value="";
-});
-
-// Real-time news updates
-onSnapshot(collection(db, "news"), snapshot => {
-  newsContainer.innerHTML = "";
-  snapshot.docs.sort((a,b)=>b.data().createdAt - a.data().createdAt).forEach(docSnap => {
-    const data = docSnap.data();
-    const card = document.createElement("div");
-    card.className = "news-card";
-    const imgTag = data.image ? `<img src="${data.image}" alt="صورة الخبر">` : "";
-    card.innerHTML = `${imgTag}<h3>${data.title}</h3><p>${data.content}</p>`;
-
-    // Show remove button if editMode
-    if(editMode){
-      const removeBtn = document.createElement("span");
-      removeBtn.className = "remove-btn";
-      removeBtn.textContent = "🗑";
-      removeBtn.onclick = async () => {
-        if(data.image){
-          const imgRef = ref(storage, data.image);
-          try{ await deleteObject(imgRef); }catch(err){console.log("Image delete error", err);}
-        }
-        await deleteDoc(doc(db,"news",docSnap.id));
-      };
-      removeBtn.style.display = "block";
-      card.appendChild(removeBtn);
-    }
-
-    newsContainer.appendChild(card);
-  });
+// Display news
+const newsContainer = document.getElementById("newsContainer");
+news.forEach(item => {
+  const card = document.createElement("div");
+  card.className = "news-card";
+  const imgTag = item.image ? `<img src="${item.image}" alt="صورة الخبر">` : "";
+  card.innerHTML = `${imgTag}<h3>${item.title}</h3><p>${item.content}</p>`;
+  newsContainer.appendChild(card);
 });
 </script>
 
