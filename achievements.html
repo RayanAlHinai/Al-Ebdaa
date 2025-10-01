@@ -5,15 +5,10 @@
   <title>إنجازات المدرسة</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    .small-btn { padding:5px 10px; border-radius:5px; cursor:pointer; }
-    #editAchievementsForm { display:none; margin-top:10px; }
-    #editAchievementsForm input, #editAchievementsForm textarea {
-      width: 80%; padding:5px; margin-bottom:5px; display:block;
-    }
+    body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
     #achievementsContent { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-    .card { padding:10px; border:1px solid #ccc; border-radius:5px; position:relative; width:200px; }
+    .card { padding:10px; border:1px solid #ccc; border-radius:5px; width:200px; }
     .card img { width:100%; height:auto; margin-top:5px; }
-    .remove-btn { position:absolute; top:5px; left:5px; cursor:pointer; color:red; font-weight:bold; }
   </style>
 </head>
 <body>
@@ -32,114 +27,42 @@
   </nav>
 
   <section>
-    <h2 style="display:flex; justify-content:space-between; align-items:center;">
-      نجاحاتنا
-      <button id="editAchievementsBtn" class="small-btn">✏️ تعديل المحتوى</button>
-    </h2>
-
+    <h2>نجاحاتنا</h2>
     <div id="achievementsContent"></div>
-
-    <!-- Achievements edit form -->
-    <div id="editAchievementsForm">
-      <input type="text" id="ach-title" placeholder="عنوان الإنجاز">
-      <textarea id="ach-content" placeholder="وصف الإنجاز"></textarea>
-      <input type="file" id="ach-file" accept="image/*">
-      <button type="button" id="saveAchievementsBtn">📤 رفع وإضافة الإنجاز</button>
-    </div>
   </section>
 
   <footer>
     <p>© 2025 بوابة الإبداع</p>
   </footer>
 
-  <!-- Firebase Module Script -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
-      authDomain: "alebdaa3-934f1.firebaseapp.com",
-      projectId: "alebdaa3-934f1",
-      storageBucket: "alebdaa3-934f1.appspot.com",
-      messagingSenderId: "847563462029",
-      appId: "1:847563462029:web:0938bbc4677cdfe44899c4"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
-    const ADMIN_PASS = "SuperSecret123";
-
-    const editBtn = document.getElementById("editAchievementsBtn");
-    const editForm = document.getElementById("editAchievementsForm");
-    const titleInput = document.getElementById("ach-title");
-    const contentInput = document.getElementById("ach-content");
-    const imageInput = document.getElementById("ach-file");
-    const saveBtn = document.getElementById("saveAchievementsBtn");
-    const achList = document.getElementById("achievementsContent");
-
-    let editMode = false;
-
-    editBtn.addEventListener("click", () => {
-      const pass = prompt("أدخل كلمة المرور للتعديل:");
-      if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-      editMode = true;
-      editForm.style.display = "block";
-    });
-
-    saveBtn.addEventListener("click", async () => {
-      const title = titleInput.value.trim();
-      const content = contentInput.value.trim();
-      const file = imageInput.files[0];
-
-      if(!title || !content) return alert("⚠️ الرجاء إدخال عنوان ووصف الإنجاز");
-
-      let imageURL = "";
-      if(file){
-        const storageRef = ref(storage, "achievements/" + Date.now() + "_" + file.name);
-        await uploadBytes(storageRef, file);
-        imageURL = await getDownloadURL(storageRef);
+  <script>
+    // Example achievements data (add/remove by code here)
+    const achievements = [
+      {
+        title: "فوز طلاب المدرسة في مسابقة الروبوتات",
+        content: "حقق طلاب الصفوف العليا المركز الأول على مستوى المحافظة.",
+        image: "assets/ach1.jpg"
+      },
+      {
+        title: "مبادرة تنظيف الحرم المدرسي",
+        content: "شارك الطلاب والمعلمين في حملة تنظيف الحرم المدرسي لتعزيز الوعي البيئي.",
+        image: "assets/ach2.jpg"
+      },
+      {
+        title: "مهرجان العلوم والابتكار",
+        content: "عرض الطلاب مشاريع مبتكرة في مهرجان العلوم السنوي.",
+        image: "assets/ach3.jpg"
       }
+    ];
 
-      await addDoc(collection(db, "achievements"), { title, content, image: imageURL, createdAt: Date.now() });
-
-      // Clear inputs
-      titleInput.value="";
-      contentInput.value="";
-      imageInput.value="";
-    });
-
-    // Real-time updates
-    onSnapshot(collection(db, "achievements"), snapshot => {
-      achList.innerHTML = "";
-      const sorted = snapshot.docs.sort((a,b) => b.data().createdAt - a.data().createdAt);
-      sorted.forEach(docSnap => {
-        const data = docSnap.data();
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `<strong>${data.title}</strong><p>${data.content}</p>`;
-        if(data.image) card.innerHTML += `<img src="${data.image}" />`;
-
-        // Remove button for admin
-        if(editMode){
-          const removeBtn = document.createElement("span");
-          removeBtn.className = "remove-btn";
-          removeBtn.textContent = "🗑";
-          removeBtn.onclick = async () => {
-            if(data.image){
-              const imgRef = ref(storage, data.image);
-              try { await deleteObject(imgRef); } catch(err){console.log(err);}
-            }
-            await deleteDoc(doc(db,"achievements",docSnap.id));
-          };
-          card.appendChild(removeBtn);
-        }
-
-        achList.appendChild(card);
-      });
+    // Display achievements
+    const achievementsContent = document.getElementById("achievementsContent");
+    achievements.forEach(ach => {
+      const div = document.createElement("div");
+      div.className = "card";
+      const imgTag = ach.image ? `<img src="${ach.image}" alt="صورة الإنجاز">` : "";
+      div.innerHTML = `<strong>${ach.title}</strong><p>${ach.content}</p>${imgTag}`;
+      achievementsContent.appendChild(div);
     });
   </script>
 
