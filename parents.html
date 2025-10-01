@@ -6,13 +6,30 @@
   <link rel="stylesheet" href="style.css">
   <style>
     body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
-    .parents-steps { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-    .step { padding:10px; border-radius:5px; width:200px; color:#fff; display:flex; align-items:center; gap:10px; }
+    .parents-steps { 
+      display:flex; 
+      flex-wrap:wrap; 
+      gap:15px; 
+      margin-top:10px; 
+      justify-content: center; /* center cards horizontally */
+    }
+    .step { 
+      padding:15px; 
+      border-radius:8px; 
+      width:300px;  /* increased width */
+      color:#fff; 
+      display:flex; 
+      align-items:center; 
+      gap:15px; 
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      font-size:16px;
+    }
     .blue { background-color:#3498db; }
     .teal { background-color:#1abc9c; }
     .green { background-color:#2ecc71; }
     .yellow { background-color:#f1c40f; color:#000; }
-    .step span { font-size:24px; }
+    .step span { font-size:28px; }
+    p { margin:0; }
   </style>
 </head>
 <body>
@@ -44,12 +61,12 @@
 <script>
 // Sample parent advice (add/remove by code here)
 const parentAdvice = [
-  { icon: "🏫", text: "التوازن أساس التربية: كونوا حازمين في القيم، مرنين في الأسلوب", color: "blue" },
-  { icon: "🎓", text: "أبناؤكم مرآة لكم: ما يرونه فيكم من سلوك وقيم ينعكس في حياتهم اليومية أكثر مما يرونه في الكتب أو يسمعونه في المدرسة", color: "teal" },
-  //{ icon: "⚽", text: "تشجيع الأبناء على الاشتراك في الأنشطة المختلفة", color: "green" },
-  //{ icon: "🎯", text: "مساعدة الأبناء على تحديد أهدافهم في الحياة", color: "yellow" },
- // { icon: "📚", text: "متابعة الواجبات المنزلية والتأكد من إكمالها", color: "blue" },
- // { icon: "💬", text: "التحدث مع الأبناء عن يومهم وأخبار المدرسة", color: "teal" }
+  { icon: "🏫", text: "تحفيز الأبناء على الذهاب إلى المدرسة", color: "blue" },
+  { icon: "🎓", text: "إعلام الأبناء بأهمية التعليم", color: "teal" },
+  { icon: "⚽", text: "تشجيع الأبناء على الاشتراك في الأنشطة المختلفة", color: "green" },
+  { icon: "🎯", text: "مساعدة الأبناء على تحديد أهدافهم في الحياة", color: "yellow" },
+  { icon: "📚", text: "متابعة الواجبات المنزلية والتأكد من إكمالها", color: "blue" },
+  { icon: "💬", text: "التحدث مع الأبناء عن يومهم وأخبار المدرسة", color: "teal" }
 ];
 
 // Display parent advice
