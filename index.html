@@ -6,13 +6,9 @@
 <link rel="stylesheet" href="style.css">
 <style>
 body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
-.small-btn { padding:5px 10px; border-radius:5px; cursor:pointer; }
-#editForm { display:none; margin-top:10px; }
-#editForm input, #editForm textarea { width:80%; padding:5px; margin-bottom:5px; display:block; }
 .news-slider { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-.news-card { border:1px solid #ccc; padding:10px; border-radius:5px; position:relative; width:200px; }
+.news-card { border:1px solid #ccc; padding:10px; border-radius:5px; width:200px; }
 .news-card img { width:100%; height:auto; margin-bottom:5px; }
-.remove-btn { position:absolute; top:5px; left:5px; cursor:pointer; color:red; font-weight:bold; display:none; }
 </style>
 </head>
 <body>
@@ -38,21 +34,8 @@ body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
       <h2>أهلاً بكم في بوابة الإبداع</h2>
     </div>
 
-    <h2 style="display:flex; justify-content:space-between; align-items:center;">
-      📰 الأخبار
-      <button id="editNewsBtn" class="small-btn">✏️ تعديل الأخبار</button>
-    </h2>
-    
+    <h2>📰 الأخبار</h2>
     <div class="news-slider" id="newsContainer"></div>
-
-    <!-- Add News Form -->
-    <div id="editForm">
-      <h3>إضافة خبر جديد</h3>
-      <input type="text" id="newsTitleInput" placeholder="عنوان الخبر">
-      <textarea id="newsContentInput" placeholder="محتوى الخبر"></textarea>
-      <input type="file" id="newsImageInput" accept="image/*">
-      <button type="button" id="addNewsBtn">📤 رفع وإضافة الخبر</button>
-    </div>
   </div>
 </section>
 
@@ -61,41 +44,20 @@ body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
 </footer>
 
 <script>
-const ADMIN_PASS = "Admin_2002";
 const NEWS_KEY = "bawabatalibda3_news";
-
 const newsContainer = document.getElementById("newsContainer");
-const editNewsBtn = document.getElementById("editNewsBtn");
-const editForm = document.getElementById("editForm");
-const newsTitleInput = document.getElementById("newsTitleInput");
-const newsContentInput = document.getElementById("newsContentInput");
-const newsImageInput = document.getElementById("newsImageInput");
-const addNewsBtn = document.getElementById("addNewsBtn");
 
 let newsData = JSON.parse(localStorage.getItem(NEWS_KEY) || "[]");
-let editMode = false;
 
-renderNews();
-
+// Render news
 function renderNews() {
   newsContainer.innerHTML = "";
-  newsData.forEach((news, index) => {
+  newsData.forEach(news => {
     const card = document.createElement("div");
     card.className = "news-card";
 
     let imgTag = news.image ? `<img src="${news.image}" alt="صورة الخبر">` : "";
-    card.innerHTML = `${imgTag}<h3>${news.title}</h3><p>${news.content}</p><span class="remove-btn" data-index="${index}">🗑</span>`;
-    
-    const removeBtn = card.querySelector(".remove-btn");
-    if(editMode) {
-      removeBtn.style.display = "block";
-      removeBtn.onclick = () => {
-        newsData.splice(index,1);
-        saveNews();
-        renderNews();
-      };
-    }
-
+    card.innerHTML = `${imgTag}<h3>${news.title}</h3><p>${news.content}</p>`;
     newsContainer.appendChild(card);
   });
 }
@@ -104,48 +66,19 @@ function saveNews() {
   localStorage.setItem(NEWS_KEY, JSON.stringify(newsData));
 }
 
-editNewsBtn.addEventListener("click", () => {
-  const pass = prompt("أدخل كلمة المرور للتعديل:");
-  if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-  editMode = true;
-  editForm.style.display = "block";
-  renderNews();
-});
+// Example of adding news programmatically
+// newsData.push({title:"عنوان الخبر", content:"محتوى الخبر", image:"assets/news1.jpg"});
+// saveNews();
+// renderNews();
 
-addNewsBtn.addEventListener("click", () => {
-  const title = newsTitleInput.value.trim();
-  const content = newsContentInput.value.trim();
-  if(!title || !content) return alert("⚠️ الرجاء إدخال عنوان الخبر ومحتواه");
-
-  if(newsImageInput.files[0]){
-    const reader = new FileReader();
-    reader.onload = function(e){
-      saveNewItem(title, content, e.target.result);
-    }
-    reader.readAsDataURL(newsImageInput.files[0]);
-  } else {
-    saveNewItem(title, content, "");
-  }
-});
-
-function saveNewItem(title, content, image){
-  newsData.push({title, content, image});
-  newsTitleInput.value="";
-  newsContentInput.value="";
-  newsImageInput.value="";
-  saveNews();
-  renderNews();
-  alert("✅ تم إضافة الخبر بنجاح!");
-}
+renderNews();
 </script>
 
 <!-- Firebase Module -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
-
-const FIREBASE_ADMIN_PASS = "SuperSecret123";
+import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
@@ -160,37 +93,21 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Save news to Firebase
-window.addNewsFirebase = async function(){
-  const pass = prompt("Enter admin password:");
-  if(pass !== FIREBASE_ADMIN_PASS) return alert("Wrong password!");
-  const title = newsTitleInput.value.trim();
-  const file = newsImageInput.files[0];
-  if(!title) return alert("Enter title");
-  
-  let imageURL = "";
-  if(file){
-    const storageRef = ref(storage, "news/" + file.name);
-    await uploadBytes(storageRef, file);
-    imageURL = await getDownloadURL(storageRef);
-  }
-
-  await addDoc(collection(db,"news"),{title, image:imageURL});
-  newsTitleInput.value="";
-  newsContentInput.value="";
-  newsImageInput.value="";
-};
-
-// Real-time update
-document.addEventListener("DOMContentLoaded",()=>{
-  onSnapshot(collection(db,"news"), snapshot=>{
-    snapshot.forEach(doc=>{
+// Real-time news update
+document.addEventListener("DOMContentLoaded", () => {
+  onSnapshot(collection(db,"news"), snapshot => {
+    snapshot.forEach(async doc => {
       const data = doc.data();
-      const exists = Array.from(newsContainer.children).some(c=>c.querySelector('h3')?.textContent === data.title);
+      const exists = Array.from(newsContainer.children).some(c => c.querySelector('h3')?.textContent === data.title);
       if(!exists){
+        let imgTag = "";
+        if(data.image){
+          try {
+            imgTag = `<img src="${await getDownloadURL(ref(storage, "news/" + data.image))}" alt="صورة الخبر">`;
+          } catch(e) { console.log("Error loading image:", e); }
+        }
         const card = document.createElement("div");
-        card.className="news-card";
-        const imgTag = data.image ? `<img src="${data.image}" alt="صورة الخبر">` : "";
+        card.className = "news-card";
         card.innerHTML = `${imgTag}<h3>${data.title}</h3>`;
         newsContainer.appendChild(card);
       }
