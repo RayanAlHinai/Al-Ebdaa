@@ -33,9 +33,7 @@
       <button id="editLibraryBtn" class="small-btn">✏️ تعديل المكتبة</button>
     </h2>
 
-    <ul id="libraryContent">
-      <li class="book-item"><a href="assets/sample.pdf" target="_blank">كتاب تجريبي</a></li>
-    </ul>
+    <ul id="libraryContent"></ul>
 
     <!-- Edit Form -->
     <div id="editLibraryForm">
@@ -49,10 +47,26 @@
     <p>© 2025 بوابة الإبداع</p>
   </footer>
 
-  <script>
-    const ADMIN_PASS = "Admin_2002";
-    const LIBRARY_KEY = "bawabatalibda3_library";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
+    import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
+    const firebaseConfig = {
+      apiKey: "AIzaSyDtZ20xX1ly8XnvvN4Q-LvP_YWXfQs3HlU",
+      authDomain: "alebdaa-e25be.firebaseapp.com",
+      projectId: "alebdaa-e25be",
+      storageBucket: "alebdaa-e25be.appspot.com",
+      messagingSenderId: "444943642971",
+      appId: "1:444943642971:web:fc1ce77de0a9c53d25ea7e",
+      measurementId: "G-2E6PLZ7LHJ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    getAnalytics(app);
+    const db = getFirestore(app);
+
+    const ADMIN_PASS = "Admin_2002";
     const libraryContent = document.getElementById("libraryContent");
     const editBtn = document.getElementById("editLibraryBtn");
     const editForm = document.getElementById("editLibraryForm");
@@ -60,53 +74,47 @@
     const bookURL = document.getElementById("bookURL");
     const addBookBtn = document.getElementById("addBookBtn");
 
-    let books = JSON.parse(localStorage.getItem(LIBRARY_KEY) || "[]");
-    if (books.length) renderBooks();
-
-    function renderBooks() {
-      libraryContent.innerHTML = "";
-      books.forEach((book, i) => {
-        const li = document.createElement("li");
-        li.className = "book-item";
-        li.innerHTML = `<a href="${book.url}" target="_blank">${book.name}</a>`;
-
-        if (editForm.style.display === "block") {
-          const delBtn = document.createElement("span");
-          delBtn.textContent = "🗑";
-          delBtn.className = "remove-btn";
-          delBtn.onclick = () => {
-            books.splice(i, 1);
-            saveBooks();
-            renderBooks();
-          };
-          li.appendChild(delBtn);
-        }
-
-        libraryContent.appendChild(li);
-      });
-    }
-
-    function saveBooks() {
-      localStorage.setItem(LIBRARY_KEY, JSON.stringify(books));
-    }
+    let editMode = false;
+    const booksCollection = collection(db, "library");
 
     editBtn.addEventListener("click", () => {
       const pass = prompt("أدخل كلمة المرور للتعديل:");
-      if (pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
+      if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
+      editMode = true;
       editForm.style.display = "block";
-      renderBooks();
     });
 
-    addBookBtn.addEventListener("click", () => {
+    addBookBtn.addEventListener("click", async () => {
       const name = bookName.value.trim();
       const url = bookURL.value.trim();
-      if (!name || !url) return alert("الرجاء إدخال اسم الكتاب والرابط");
-      books.push({ name, url });
+      if(!name || !url) return alert("الرجاء إدخال اسم الكتاب والرابط");
+      await addDoc(booksCollection, { name, url });
       bookName.value = "";
       bookURL.value = "";
-      saveBooks();
-      renderBooks();
     });
+
+    function renderBooks() {
+      onSnapshot(booksCollection, snapshot => {
+        libraryContent.innerHTML = "";
+        snapshot.forEach(docSnap => {
+          const li = document.createElement("li");
+          li.className = "book-item";
+          li.innerHTML = `<a href="${docSnap.data().url}" target="_blank">${docSnap.data().name}</a>`;
+
+          if(editMode) {
+            const delBtn = document.createElement("span");
+            delBtn.textContent = "🗑";
+            delBtn.className = "remove-btn";
+            delBtn.onclick = async () => { await deleteDoc(doc(db, "library", docSnap.id)); };
+            li.appendChild(delBtn);
+          }
+
+          libraryContent.appendChild(li);
+        });
+      });
+    }
+
+    renderBooks();
   </script>
 </body>
 </html>
