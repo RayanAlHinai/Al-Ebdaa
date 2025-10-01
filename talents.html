@@ -9,7 +9,7 @@
     #editTalentForm { display:none; margin-top:10px; }
     #editTalentForm input, #editTalentForm textarea { width: 80%; padding:8px; margin-bottom:8px; display:block; font-size:16px; }
     #editTalentForm button { padding:10px 20px; font-size:16px; }
-  
+
     .card {
       border: 2px solid #ccc;
       padding: 20px;
@@ -23,7 +23,7 @@
       box-shadow: 0 6px 12px rgba(0,0,0,0.15);
       vertical-align: top;
     }
-  
+
     .card img {
       width: 100%;          /* fill card width */
       max-height: 400px;    /* much taller image */
@@ -31,11 +31,9 @@
       margin-top: 15px;
       border-radius: 15px;
     }
-  
+
     .remove-btn { margin-left:10px; cursor:pointer; color:red; font-size:20px; }
   </style>
-  
-  
 </head>
 <body>
   <header>
@@ -72,10 +70,28 @@
     <p>© 2025 بوابة الإبداع</p>
   </footer>
 
-  <script>
-    const ADMIN_PASS = "Admin_2002";
-    const TALENTS_KEY = "bawabatalibda3_talents";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
 
+    const firebaseConfig = {
+      apiKey: "AIzaSyDtZ20xX1ly8XnvvN4Q-LvP_YWXfQs3HlU",
+      authDomain: "alebdaa-e25be.firebaseapp.com",
+      projectId: "alebdaa-e25be",
+      storageBucket: "alebdaa-e25be.appspot.com",
+      messagingSenderId: "444943642971",
+      appId: "1:444943642971:web:fc1ce77de0a9c53d25ea7e",
+      measurementId: "G-2E6PLZ7LHJ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    getAnalytics(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    const ADMIN_PASS = "Admin_2002";
     const talentsContent = document.getElementById("talentsContent");
     const editBtn = document.getElementById("editTalentBtn");
     const editForm = document.getElementById("editTalentForm");
@@ -84,73 +100,63 @@
     const talentImage = document.getElementById("talentImage");
     const saveTalentBtn = document.getElementById("saveTalentBtn");
 
-    let talents = JSON.parse(localStorage.getItem(TALENTS_KEY) || "[]");
-
-    if (talents.length) renderTalents();
-
-    function renderTalents() {
-      talentsContent.innerHTML = "";
-      talents.forEach((talent, i) => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <h3>${talent.title}</h3>
-          <p>${talent.content}</p>
-          ${talent.image ? `<img src="${talent.image}" alt="${talent.title}" style="max-width:250px;">` : ""}
-        `;
-
-        if (editForm.style.display === "block") {
-          const delBtn = document.createElement("span");
-          delBtn.textContent = "🗑";
-          delBtn.className = "remove-btn";
-          delBtn.onclick = () => {
-            talents.splice(i, 1);
-            saveTalents();
-            renderTalents();
-          };
-          card.appendChild(delBtn);
-        }
-
-        talentsContent.appendChild(card);
-      });
-    }
-
-    function saveTalents() {
-      localStorage.setItem(TALENTS_KEY, JSON.stringify(talents));
-    }
+    let editMode = false;
 
     editBtn.addEventListener("click", () => {
       const pass = prompt("أدخل كلمة المرور للتعديل:");
       if (pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
+      editMode = true;
       editForm.style.display = "block";
       renderTalents();
     });
 
-    saveTalentBtn.addEventListener("click", () => {
+    saveTalentBtn.addEventListener("click", async () => {
       const title = talentTitle.value.trim();
       const content = talentContent.value.trim();
       if (!title || !content) return alert("الرجاء إدخال عنوان الموهبة ووصفها");
 
-      // Handle image as base64
+      let imageUrl = "";
       if (talentImage.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          talents.push({ title, content, image: e.target.result });
-          talentTitle.value = "";
-          talentContent.value = "";
-          talentImage.value = "";
-          saveTalents();
-          renderTalents();
-        }
-        reader.readAsDataURL(talentImage.files[0]);
-      } else {
-        talents.push({ title, content, image: "" });
-        talentTitle.value = "";
-        talentContent.value = "";
-        saveTalents();
-        renderTalents();
+        const file = talentImage.files[0];
+        const storageRef = ref(storage, `talents_images/${Date.now()}_${file.name}`);
+        await uploadBytes(storageRef, file);
+        imageUrl = await getDownloadURL(storageRef);
       }
+
+      await addDoc(collection(db, "talents"), {
+        title, content, image: imageUrl, date: serverTimestamp()
+      });
+
+      talentTitle.value = "";
+      talentContent.value = "";
+      talentImage.value = "";
+      alert("✅ تم إضافة الموهبة بنجاح!");
     });
+
+    function renderTalents() {
+      onSnapshot(collection(db, "talents"), snapshot => {
+        talentsContent.innerHTML = "";
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `<h3>${data.title}</h3><p>${data.content}</p>` +
+                           (data.image ? `<img src="${data.image}" alt="${data.title}">` : "");
+
+          if (editMode) {
+            const delBtn = document.createElement("span");
+            delBtn.textContent = "🗑";
+            delBtn.className = "remove-btn";
+            delBtn.onclick = async () => { await deleteDoc(doc(db, "talents", docSnap.id)); };
+            card.appendChild(delBtn);
+          }
+
+          talentsContent.appendChild(card);
+        });
+      });
+    }
+
+    renderTalents();
   </script>
 </body>
 </html>
