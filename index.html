@@ -4,97 +4,20 @@
   <meta charset="UTF-8">
   <title>بوابة الإبداع</title>
   <link rel="stylesheet" href="style.css">
-
   <style>
-    body {
-      font-family: Tahoma, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-
-    .news-slider {
-      display: flex;
-      overflow-x: auto;
-      gap: 15px;
-      padding: 15px;
-      background: #eee;
-      border-radius: 8px;
-      margin-top: 15px;
-    }
-    .news-card {
-      min-width: 250px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
-      padding: 10px;
-      text-align: right;
-      position: relative;
-    }
-    .news-card img {
-      width: 100%;
-      border-radius: 6px;
-    }
-    .news-card h3 {
-      margin: 10px 0 5px;
-    }
-    .news-card p {
-      font-size: 14px;
-      color: #555;
-    }
-    .remove-btn {
-      position: absolute;
-      top: 5px;
-      left: 10px;
-      color: red;
-      cursor: pointer;
-      font-size: 20px;
-      display: none;
-    }
-
-    /* زر تعديل الأخبار */
-    #editNewsBtn {
-      background: #c09bd2;
-      color: white;
-      padding: 8px 15px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 10px;
-      margin-bottom: 10px;
-    }
-    #editNewsBtn:hover {
-      background: #9b75ad;
-    }
-
-    /* فورم إضافة خبر */
-    #editForm {
-      display: none;
-      margin-top: 20px;
-      text-align: center;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 15px;
-      border-radius: 8px;
-    }
-    #editForm input, 
-    #editForm textarea {
-      width: 80%;
-      max-width: 400px;
-      padding: 8px;
-      margin: 5px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    #editForm button {
-      background: #22c55e;
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #editForm button:hover {
-      background: #16a34a;
-    }
+    body { font-family: Tahoma, sans-serif; margin: 0; padding: 0; }
+    .news-slider { display: flex; overflow-x: auto; gap: 15px; padding: 15px; background: #eee; border-radius: 8px; margin-top: 15px; }
+    .news-card { min-width: 250px; background: white; border-radius: 8px; box-shadow: 0px 2px 6px rgba(0,0,0,0.1); padding: 10px; text-align: right; position: relative; }
+    .news-card img { width: 100%; border-radius: 6px; }
+    .news-card h3 { margin: 10px 0 5px; }
+    .news-card p { font-size: 14px; color: #555; }
+    .remove-btn { position: absolute; top: 5px; left: 10px; color: red; cursor: pointer; font-size: 20px; display: none; }
+    #editNewsBtn { background: #c09bd2; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; margin-bottom: 10px; }
+    #editNewsBtn:hover { background: #9b75ad; }
+    #editForm { display: none; margin-top: 20px; text-align: center; background: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 8px; }
+    #editForm input, #editForm textarea { width: 80%; max-width: 400px; padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; }
+    #editForm button { background: #22c55e; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+    #editForm button:hover { background: #16a34a; }
   </style>
 </head>
 
@@ -142,12 +65,10 @@
     <p>© 2025 بوابة الإبداع - جميع الحقوق محفوظة</p>
   </footer>
 
-  <!-- Firebase and JS -->
+  <!-- Firebase and script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
-    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDtZ20xX1ly8XnvvN4Q-LvP_YWXfQs3HlU",
@@ -160,9 +81,7 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
     const ADMIN_PASS = "Admin_2002";
     const newsContainer = document.getElementById("newsContainer");
@@ -174,74 +93,57 @@
     const addNewsBtn = document.getElementById("addNewsBtn");
     let editMode = false;
 
+    // Show real-time news for everyone
+    onSnapshot(collection(db, "news"), (snapshot) => {
+      newsContainer.innerHTML = "";
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const card = document.createElement("div");
+        card.className = "news-card";
+        card.innerHTML = `
+          ${data.image ? `<img src="${data.image}" alt="صورة الخبر">` : ""}
+          <h3>${data.title}</h3>
+          <p>${data.content}</p>
+          <span class="remove-btn" data-id="${docSnap.id}">🗑</span>
+        `;
+        if(editMode) {
+          const delBtn = card.querySelector(".remove-btn");
+          delBtn.style.display = "block";
+          delBtn.onclick = async () => {
+            await deleteDoc(doc(db, "news", docSnap.id));
+          };
+        }
+        newsContainer.appendChild(card);
+      });
+    });
+
     editNewsBtn.addEventListener("click", () => {
       const pass = prompt("أدخل كلمة المرور للتعديل:");
       if (pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
       editMode = true;
       editForm.style.display = "block";
-      renderNews();
     });
 
-    addNewsBtn.addEventListener("click", async () => {
+    addNewsBtn.addEventListener("click", () => {
       const title = newsTitle.value.trim();
       const content = newsContent.value.trim();
       if (!title || !content) return alert("⚠️ الرجاء إدخال عنوان الخبر ومحتواه");
-    
-      let imageData = "";
-      if (newsImage.files[0]) {
+
+      if(newsImage.files[0]) {
         const reader = new FileReader();
         reader.onload = async function(e) {
-          imageData = e.target.result;
-          await addNewsToFirebase(title, content, imageData);
+          await addDoc(collection(db, "news"), { title, content, image: e.target.result, date: new Date() });
+          newsTitle.value = "";
+          newsContent.value = "";
+          newsImage.value = "";
         };
         reader.readAsDataURL(newsImage.files[0]);
       } else {
-        await addNewsToFirebase(title, content, "");
+        addDoc(collection(db, "news"), { title, content, image: "", date: new Date() });
+        newsTitle.value = "";
+        newsContent.value = "";
       }
     });
-    
-    async function addNewsToFirebase(title, content, image) {
-      await addDoc(collection(db, "news"), {
-        title,
-        content,
-        image,
-        date: new Date()
-      });
-      // Clear form
-      newsTitle.value = "";
-      newsContent.value = "";
-      newsImage.value = "";
-      alert("✅ تم إضافة الخبر بنجاح!");
-    }
-
-
-    function renderNews() {
-      onSnapshot(collection(db, "news"), (snapshot) => {
-        newsContainer.innerHTML = "";
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          const card = document.createElement("div");
-          card.className = "news-card";
-          let imgTag = data.image ? `<img src="${data.image}" alt="صورة الخبر">` : "";
-          card.innerHTML = `
-            ${imgTag}
-            <h3>${data.title}</h3>
-            <p>${data.content}</p>
-            <span class="remove-btn" data-id="${docSnap.id}">🗑</span>
-          `;
-          if (editMode) {
-            const removeBtn = card.querySelector(".remove-btn");
-            removeBtn.style.display = "block";
-            removeBtn.onclick = async () => {
-              await deleteDoc(doc(db, "news", docSnap.id));
-            };
-          }
-          newsContainer.appendChild(card);
-        });
-      });
-    }
-
-    renderNews(); // initial render
   </script>
 </body>
 </html>
