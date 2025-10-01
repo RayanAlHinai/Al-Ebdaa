@@ -12,8 +12,6 @@
       padding: 0;
     }
 
-
-
     .news-slider {
       display: flex;
       overflow-x: auto;
@@ -97,10 +95,9 @@
     #editForm button:hover {
       background: #16a34a;
     }
-
-
   </style>
 </head>
+
 <body>
   <header>
     <img src="assets/logo2.png" alt="Left Logo" class="logo-left">
@@ -145,10 +142,29 @@
     <p>© 2025 بوابة الإبداع - جميع الحقوق محفوظة</p>
   </footer>
 
-  <script>
-    const ADMIN_PASS = "Admin_2002";
-    const NEWS_KEY = "bawabatalibda3_news";
+  <!-- Firebase and JS -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
 
+    const firebaseConfig = {
+      apiKey: "AIzaSyDtZ20xX1ly8XnvvN4Q-LvP_YWXfQs3HlU",
+      authDomain: "alebdaa-e25be.firebaseapp.com",
+      projectId: "alebdaa-e25be",
+      storageBucket: "alebdaa-e25be.appspot.com",
+      messagingSenderId: "444943642971",
+      appId: "1:444943642971:web:fc1ce77de0a9c53d25ea7e",
+      measurementId: "G-2E6PLZ7LHJ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    const ADMIN_PASS = "Admin_2002";
     const newsContainer = document.getElementById("newsContainer");
     const editNewsBtn = document.getElementById("editNewsBtn");
     const editForm = document.getElementById("editForm");
@@ -156,40 +172,7 @@
     const newsContent = document.getElementById("newsContent");
     const newsImage = document.getElementById("newsImage");
     const addNewsBtn = document.getElementById("addNewsBtn");
-
-    let newsData = JSON.parse(localStorage.getItem(NEWS_KEY) || "[]");
     let editMode = false;
-
-    renderNews();
-
-    function renderNews() {
-      newsContainer.innerHTML = "";
-      newsData.forEach((news, index) => {
-        const card = document.createElement("div");
-        card.className = "news-card";
-
-        let imgTag = news.image ? `<img src="${news.image}" alt="صورة الخبر">` : "";
-        card.innerHTML = `
-          ${imgTag}
-          <h3>${news.title}</h3>
-          <p>${news.content}</p>
-          <span class="remove-btn" data-index="${index}">🗑</span>
-        `;
-        if (editMode) {
-          card.querySelector(".remove-btn").style.display = "block";
-          card.querySelector(".remove-btn").onclick = () => {
-            newsData.splice(index, 1);
-            saveNews();
-            renderNews();
-          };
-        }
-        newsContainer.appendChild(card);
-      });
-    }
-
-    function saveNews() {
-      localStorage.setItem(NEWS_KEY, JSON.stringify(newsData));
-    }
 
     editNewsBtn.addEventListener("click", () => {
       const pass = prompt("أدخل كلمة المرور للتعديل:");
@@ -199,34 +182,59 @@
       renderNews();
     });
 
-    addNewsBtn.addEventListener("click", () => {
+    addNewsBtn.addEventListener("click", async () => {
       const title = newsTitle.value.trim();
       const content = newsContent.value.trim();
-
       if (!title || !content) return alert("⚠️ الرجاء إدخال عنوان الخبر ومحتواه");
 
-      let imageData = "";
+      let imageUrl = "";
       if (newsImage.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          imageData = e.target.result;
-          saveNewItem(title, content, imageData);
-        };
-        reader.readAsDataURL(newsImage.files[0]);
-      } else {
-        saveNewItem(title, content, "");
+        const file = newsImage.files[0];
+        const storageRef = ref(storage, `news_images/${Date.now()}_${file.name}`);
+        await uploadBytes(storageRef, file);
+        imageUrl = await getDownloadURL(storageRef);
       }
-    });
 
-    function saveNewItem(title, content, image) {
-      newsData.push({ title, content, image });
+      await addDoc(collection(db, "news"), {
+        title,
+        content,
+        image: imageUrl,
+        date: serverTimestamp()
+      });
+
       newsTitle.value = "";
       newsContent.value = "";
       newsImage.value = "";
-      saveNews();
-      renderNews();
       alert("✅ تم إضافة الخبر بنجاح!");
+    });
+
+    function renderNews() {
+      onSnapshot(collection(db, "news"), (snapshot) => {
+        newsContainer.innerHTML = "";
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          const card = document.createElement("div");
+          card.className = "news-card";
+          let imgTag = data.image ? `<img src="${data.image}" alt="صورة الخبر">` : "";
+          card.innerHTML = `
+            ${imgTag}
+            <h3>${data.title}</h3>
+            <p>${data.content}</p>
+            <span class="remove-btn" data-id="${docSnap.id}">🗑</span>
+          `;
+          if (editMode) {
+            const removeBtn = card.querySelector(".remove-btn");
+            removeBtn.style.display = "block";
+            removeBtn.onclick = async () => {
+              await deleteDoc(doc(db, "news", docSnap.id));
+            };
+          }
+          newsContainer.appendChild(card);
+        });
+      });
     }
+
+    renderNews(); // initial render
   </script>
 </body>
 </html>
