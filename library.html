@@ -1,18 +1,16 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>المكتبة الإلكترونية</title>
-<link rel="stylesheet" href="style.css">
-<style>
-  body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
-  .small-btn { padding:5px 10px; border-radius:5px; cursor:pointer; }
-  #editLibraryForm { display:none; margin-top:10px; }
-  #editLibraryForm input { width:80%; padding:5px; margin-bottom:5px; display:block; }
-  #editLibraryForm button { padding:5px 10px; }
-  .book-item { margin-bottom:5px; position:relative; }
-  .remove-btn { margin-left:10px; cursor:pointer; color:red; display:none; position:absolute; left:-25px; top:0; }
-</style>
+  <meta charset="UTF-8">
+  <title>المكتبة الإلكترونية</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    #editLibraryForm { display:none; margin-top:10px; }
+    #editLibraryForm input { width: 80%; padding:5px; margin-bottom:5px; display:block; }
+    #editLibraryForm button { padding:5px 10px; }
+    .book-item { margin-bottom:5px; }
+    .remove-btn { margin-left:10px; cursor:pointer; color:red; }
+  </style>
 </head>
 <body>
 
@@ -40,8 +38,8 @@
 
   <!-- Edit Form -->
   <div id="editLibraryForm">
-    <input type="text" id="bookNameInput" placeholder="اسم الكتاب">
-    <input type="text" id="bookURLInput" placeholder="رابط الكتاب">
+    <input type="text" id="bookName" placeholder="اسم الكتاب">
+    <input type="text" id="bookURL" placeholder="رابط الكتاب">
     <button id="addBookBtn">➕ إضافة</button>
   </div>
 </section>
@@ -50,112 +48,70 @@
   <p>© 2025 بوابة الإبداع</p>
 </footer>
 
-<script>
-const ADMIN_PASS = "Admin_2002";
-const LIBRARY_KEY = "bawabatalibda3_library";
-
-const libraryContent = document.getElementById("libraryContent");
-const editBtn = document.getElementById("editLibraryBtn");
-const editForm = document.getElementById("editLibraryForm");
-const bookNameInput = document.getElementById("bookNameInput");
-const bookURLInput = document.getElementById("bookURLInput");
-const addBookBtn = document.getElementById("addBookBtn");
-
-let books = JSON.parse(localStorage.getItem(LIBRARY_KEY) || "[]");
-
-renderBooks();
-
-function renderBooks() {
-  libraryContent.innerHTML = "";
-  books.forEach((book, index) => {
-    const li = document.createElement("li");
-    li.className = "book-item";
-    li.innerHTML = `<a href="${book.url}" target="_blank">${book.name}</a>`;
-
-    const delBtn = document.createElement("span");
-    delBtn.textContent = "🗑";
-    delBtn.className = "remove-btn";
-    if(editForm.style.display === "block") delBtn.style.display = "inline";
-    delBtn.onclick = () => {
-      books.splice(index, 1);
-      saveBooks();
-      renderBooks();
-    };
-    li.appendChild(delBtn);
-
-    libraryContent.appendChild(li);
-  });
-}
-
-function saveBooks() {
-  localStorage.setItem(LIBRARY_KEY, JSON.stringify(books));
-}
-
-editBtn.addEventListener("click", () => {
-  const pass = prompt("أدخل كلمة المرور للتعديل:");
-  if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-  editForm.style.display = "block";
-  renderBooks();
-});
-
-addBookBtn.addEventListener("click", () => {
-  const name = bookNameInput.value.trim();
-  const url = bookURLInput.value.trim();
-  if(!name || !url) return alert("الرجاء إدخال اسم الكتاب والرابط");
-
-  books.push({ name, url });
-  bookNameInput.value = "";
-  bookURLInput.value = "";
-  saveBooks();
-  renderBooks();
-});
-</script>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
-const FIREBASE_ADMIN_PASS = "SuperSecret123";
+const ADMIN_PASS = "Admin_2002";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
   authDomain: "alebdaa3-934f1.firebaseapp.com",
   projectId: "alebdaa3-934f1",
-  storageBucket: "alebdaa3-934f1.appspot.com",
+  storageBucket: "alebdaa3-934f1.firebasestorage.app",
   messagingSenderId: "847563462029",
-  appId: "1:847563462029:web:0938bbc4677cdfe44899c4"
+  appId: "1:847563462029:web:0938bbc4677cdfe44899c4",
+  measurementId: "G-2H247KW0NB"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Save book to Firebase
-window.addBookFirebase = async function(){
-  const pass = prompt("Enter admin password:");
-  if(pass !== FIREBASE_ADMIN_PASS) return alert("Wrong password!");
-  const name = bookNameInput.value.trim();
-  const url = bookURLInput.value.trim();
-  if(!name || !url) return alert("Enter book name and URL");
-  await addDoc(collection(db,"library"),{name,url});
-  bookNameInput.value="";
-  bookURLInput.value="";
-};
+const libraryContent = document.getElementById("libraryContent");
+const editBtn = document.getElementById("editLibraryBtn");
+const editForm = document.getElementById("editLibraryForm");
+const bookName = document.getElementById("bookName");
+const bookURL = document.getElementById("bookURL");
+const addBookBtn = document.getElementById("addBookBtn");
 
-// Real-time update
-document.addEventListener("DOMContentLoaded",()=>{
-  const libraryList = libraryContent;
-  onSnapshot(collection(db,"library"), snapshot=>{
-    snapshot.forEach(doc=>{
-      const data = doc.data();
-      const exists = Array.from(libraryList.children).some(li=>li.querySelector('a')?.textContent===data.name);
-      if(!exists){
-        const li = document.createElement("li");
-        li.className="book-item";
-        li.innerHTML=`<a href="${data.url}" target="_blank">${data.name}</a>`;
-        libraryList.appendChild(li);
-      }
-    });
+const booksCol = collection(db, "library");
+
+// Render books in real-time
+onSnapshot(booksCol, snapshot => {
+  libraryContent.innerHTML = "";
+  snapshot.forEach(docSnap => {
+    const book = docSnap.data();
+    const li = document.createElement("li");
+    li.className = "book-item";
+    li.innerHTML = `<a href="${book.url}" target="_blank">${book.name}</a>`;
+
+    if(editForm.style.display === "block"){
+      const delBtn = document.createElement("span");
+      delBtn.textContent = "🗑";
+      delBtn.className = "remove-btn";
+      delBtn.onclick = async () => { await deleteDoc(doc(db, "library", docSnap.id)); };
+      li.appendChild(delBtn);
+    }
+
+    libraryContent.appendChild(li);
   });
+});
+
+// Show edit form
+editBtn.addEventListener("click", () => {
+  const pass = prompt("أدخل كلمة المرور للتعديل:");
+  if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
+  editForm.style.display = "block";
+});
+
+// Add new book
+addBookBtn.addEventListener("click", async () => {
+  const name = bookName.value.trim();
+  const url = bookURL.value.trim();
+  if(!name || !url) return alert("الرجاء إدخال اسم الكتاب والرابط");
+  await addDoc(booksCol, { name, url });
+  bookName.value = "";
+  bookURL.value = "";
 });
 </script>
 
