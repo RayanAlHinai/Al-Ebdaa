@@ -6,12 +6,7 @@
 <link rel="stylesheet" href="style.css">
 <style>
   body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
-  .small-btn { padding:5px 10px; border-radius:5px; cursor:pointer; }
-  #editLibraryForm { display:none; margin-top:10px; }
-  #editLibraryForm input { width:80%; padding:5px; margin-bottom:5px; display:block; }
-  #editLibraryForm button { padding:5px 10px; }
-  .book-item { margin-bottom:5px; position:relative; }
-  .remove-btn { margin-left:10px; cursor:pointer; color:red; position:absolute; left:-25px; top:0; display:none; }
+  .book-item { margin-bottom:10px; }
 </style>
 </head>
 <body>
@@ -31,99 +26,27 @@
 </nav>
 
 <section>
-  <h2>
-    الكتب المتاحة
-    <button id="editLibraryBtn" class="small-btn">✏️ تعديل المكتبة</button>
-  </h2>
-
+  <h2>الكتب المتاحة</h2>
   <ul id="libraryContent"></ul>
-
-  <!-- Edit Form -->
-  <div id="editLibraryForm">
-    <input type="text" id="bookNameInput" placeholder="اسم الكتاب">
-    <input type="text" id="bookURLInput" placeholder="رابط الكتاب">
-    <button id="addBookBtn">➕ إضافة</button>
-  </div>
 </section>
 
 <footer>
   <p>© 2025 بوابة الإبداع</p>
 </footer>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+<script>
+// Sample books (add/remove here by code)
+const books = [
+  { name: "الرياضيات للصف الخامس", url: "assets/books/math_grade5.pdf" },
+];
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
-  authDomain: "alebdaa3-934f1.firebaseapp.com",
-  projectId: "alebdaa3-934f1",
-  storageBucket: "alebdaa3-934f1.appspot.com",
-  messagingSenderId: "847563462029",
-  appId: "1:847563462029:web:0938bbc4677cdfe44899c4"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const ADMIN_PASS = "SuperSecret123";
-
-const editBtn = document.getElementById("editLibraryBtn");
-const editForm = document.getElementById("editLibraryForm");
-const bookNameInput = document.getElementById("bookNameInput");
-const bookURLInput = document.getElementById("bookURLInput");
-const addBookBtn = document.getElementById("addBookBtn");
+// Render books
 const libraryContent = document.getElementById("libraryContent");
-
-let editMode = false;
-
-editBtn.addEventListener("click", () => {
-  const pass = prompt("أدخل كلمة المرور للتعديل:");
-  if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-  editMode = true;
-  editForm.style.display = "block";
-
-  // Show delete buttons
-  libraryContent.querySelectorAll(".remove-btn").forEach(btn => btn.style.display = "inline");
-});
-
-// Add new book
-addBookBtn.addEventListener("click", async () => {
-  const name = bookNameInput.value.trim();
-  const url = bookURLInput.value.trim();
-  if(!name || !url) return alert("الرجاء إدخال اسم الكتاب والرابط");
-
-  await addDoc(collection(db,"library"), { name, url, createdAt: Date.now() });
-
-  bookNameInput.value="";
-  bookURLInput.value="";
-});
-
-// Real-time updates
-onSnapshot(collection(db,"library"), snapshot => {
-  libraryContent.innerHTML = "";
-
-  const sorted = snapshot.docs.sort((a,b) => b.data().createdAt - a.data().createdAt);
-
-  sorted.forEach(docSnap => {
-    const data = docSnap.data();
-    const li = document.createElement("li");
-    li.className = "book-item";
-    li.innerHTML = `<a href="${data.url}" target="_blank">${data.name}</a>`;
-
-    // Remove button
-    const removeBtn = document.createElement("span");
-    removeBtn.className = "remove-btn";
-    removeBtn.textContent = "🗑";
-    if(editMode) removeBtn.style.display = "inline";
-
-    removeBtn.onclick = async () => {
-      await deleteDoc(doc(db,"library",docSnap.id));
-    };
-
-    li.appendChild(removeBtn);
-    libraryContent.appendChild(li);
-  });
+books.forEach(book => {
+  const li = document.createElement("li");
+  li.className = "book-item";
+  li.innerHTML = `<a href="${book.url}" target="_blank">${book.name}</a>`;
+  libraryContent.appendChild(li);
 });
 </script>
 
