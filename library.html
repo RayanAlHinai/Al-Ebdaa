@@ -24,7 +24,7 @@
   <a href="index.html">الرئيسية</a>
   <a href="talents.html">المواهب</a>
   <a href="parents.html">همسات لولي الأمر</a>
-  <a href="library.html">المكتبة الإلكترونية</a>
+  <a href="rules.html">قوانين اللائحة</a>
   <a href="achievements.html">إنجازات المدرسة</a>
 </nav>
 
@@ -76,7 +76,7 @@ const addBookBtn = document.getElementById("addBookBtn");
 
 const booksCol = collection(db, "library");
 
-// Render books in real-time
+// 📌 Real-time listener (always runs, even after refresh)
 onSnapshot(booksCol, snapshot => {
   libraryContent.innerHTML = "";
   snapshot.forEach(docSnap => {
@@ -85,6 +85,7 @@ onSnapshot(booksCol, snapshot => {
     li.className = "book-item";
     li.innerHTML = `<a href="${book.url}" target="_blank">${book.name}</a>`;
 
+    // Only show delete buttons when editing
     if(editForm.style.display === "block"){
       const delBtn = document.createElement("span");
       delBtn.textContent = "🗑";
@@ -97,19 +98,19 @@ onSnapshot(booksCol, snapshot => {
   });
 });
 
-// Show edit form
+// 🔑 Show edit form only after password
 editBtn.addEventListener("click", () => {
   const pass = prompt("أدخل كلمة المرور للتعديل:");
   if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
   editForm.style.display = "block";
 });
 
-// Add new book
+// ➕ Add new book
 addBookBtn.addEventListener("click", async () => {
   const name = bookName.value.trim();
   const url = bookURL.value.trim();
   if(!name || !url) return alert("الرجاء إدخال اسم الكتاب والرابط");
-  await addDoc(booksCol, { name, url });
+  await addDoc(booksCol, { name, url });  // ✅ Firestore only
   bookName.value = "";
   bookURL.value = "";
 });
