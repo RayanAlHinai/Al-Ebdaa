@@ -186,27 +186,34 @@
       const title = newsTitle.value.trim();
       const content = newsContent.value.trim();
       if (!title || !content) return alert("⚠️ الرجاء إدخال عنوان الخبر ومحتواه");
-
-      let imageUrl = "";
+    
+      let imageData = "";
       if (newsImage.files[0]) {
-        const file = newsImage.files[0];
-        const storageRef = ref(storage, `news_images/${Date.now()}_${file.name}`);
-        await uploadBytes(storageRef, file);
-        imageUrl = await getDownloadURL(storageRef);
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          imageData = e.target.result;
+          await addNewsToFirebase(title, content, imageData);
+        };
+        reader.readAsDataURL(newsImage.files[0]);
+      } else {
+        await addNewsToFirebase(title, content, "");
       }
-
+    });
+    
+    async function addNewsToFirebase(title, content, image) {
       await addDoc(collection(db, "news"), {
         title,
         content,
-        image: imageUrl,
-        date: serverTimestamp()
+        image,
+        date: new Date()
       });
-
+      // Clear form
       newsTitle.value = "";
       newsContent.value = "";
       newsImage.value = "";
       alert("✅ تم إضافة الخبر بنجاح!");
-    });
+    }
+
 
     function renderNews() {
       onSnapshot(collection(db, "news"), (snapshot) => {
