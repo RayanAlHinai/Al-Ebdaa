@@ -1,113 +1,163 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>المكتبة الإلكترونية</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    #editLibraryForm { display:none; margin-top:10px; }
-    #editLibraryForm input { width: 80%; padding:5px; margin-bottom:5px; display:block; }
-    #editLibraryForm button { padding:5px 10px; }
-    .book-item { margin-bottom:5px; }
-    .remove-btn { margin-left:10px; cursor:pointer; color:red; }
-  </style>
+<meta charset="UTF-8">
+<title>المكتبة الإلكترونية</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
+  .small-btn { padding:5px 10px; border-radius:5px; cursor:pointer; }
+  #editLibraryForm { display:none; margin-top:10px; }
+  #editLibraryForm input { width:80%; padding:5px; margin-bottom:5px; display:block; }
+  #editLibraryForm button { padding:5px 10px; }
+  .book-item { margin-bottom:5px; position:relative; }
+  .remove-btn { margin-left:10px; cursor:pointer; color:red; display:none; position:absolute; left:-25px; top:0; }
+</style>
 </head>
 <body>
 
-  <header>
-    <img src="assets/logo2.png" alt="Left Logo" class="logo-left">
-    <img src="assets/logo1.png" alt="Right Logo" class="logo-right">
-    <h1>📚 المكتبة الإلكترونية</h1>
-  </header>
+<header>
+  <img src="assets/logo2.png" alt="Left Logo" class="logo-left">
+  <img src="assets/logo1.png" alt="Right Logo" class="logo-right">
+  <h1>📚 المكتبة الإلكترونية</h1>
+</header>
 
-  <nav>
-    <a href="index.html">الرئيسية</a>
-    <a href="talents.html">المواهب</a>
-    <a href="parents.html">همسات لولي الأمر</a>
-    <a href="library.html">المكتبة الإلكترونية</a>
-    <a href="achievements.html">إنجازات المدرسة</a>
-  </nav>
+<nav>
+  <a href="index.html">الرئيسية</a>
+  <a href="talents.html">المواهب</a>
+  <a href="parents.html">همسات لولي الأمر</a>
+  <a href="library.html">المكتبة الإلكترونية</a>
+  <a href="achievements.html">إنجازات المدرسة</a>
+</nav>
 
-  <section>
-    <h2>
-      الكتب المتاحة
-      <button id="editLibraryBtn" class="small-btn">✏️ تعديل المكتبة</button>
-    </h2>
+<section>
+  <h2>
+    الكتب المتاحة
+    <button id="editLibraryBtn" class="small-btn">✏️ تعديل المكتبة</button>
+  </h2>
 
-    <ul id="libraryContent">
-      <li class="book-item"><a href="assets/sample.pdf" target="_blank">كتاب تجريبي</a></li>
-    </ul>
+  <ul id="libraryContent"></ul>
 
-    <!-- Edit Form -->
-    <div id="editLibraryForm">
-      <input type="text" id="bookName" placeholder="اسم الكتاب">
-      <input type="text" id="bookURL" placeholder="رابط الكتاب">
-      <button id="addBookBtn">➕ إضافة</button>
-    </div>
-  </section>
+  <!-- Edit Form -->
+  <div id="editLibraryForm">
+    <input type="text" id="bookNameInput" placeholder="اسم الكتاب">
+    <input type="text" id="bookURLInput" placeholder="رابط الكتاب">
+    <button id="addBookBtn">➕ إضافة</button>
+  </div>
+</section>
 
-  <footer>
-    <p>© 2025 بوابة الإبداع</p>
-  </footer>
+<footer>
+  <p>© 2025 بوابة الإبداع</p>
+</footer>
 
-  <script>
-    const ADMIN_PASS = "Admin_2002";
-    const LIBRARY_KEY = "bawabatalibda3_library";
+<script>
+const ADMIN_PASS = "Admin_2002";
+const LIBRARY_KEY = "bawabatalibda3_library";
 
-    const libraryContent = document.getElementById("libraryContent");
-    const editBtn = document.getElementById("editLibraryBtn");
-    const editForm = document.getElementById("editLibraryForm");
-    const bookName = document.getElementById("bookName");
-    const bookURL = document.getElementById("bookURL");
-    const addBookBtn = document.getElementById("addBookBtn");
+const libraryContent = document.getElementById("libraryContent");
+const editBtn = document.getElementById("editLibraryBtn");
+const editForm = document.getElementById("editLibraryForm");
+const bookNameInput = document.getElementById("bookNameInput");
+const bookURLInput = document.getElementById("bookURLInput");
+const addBookBtn = document.getElementById("addBookBtn");
 
-    let books = JSON.parse(localStorage.getItem(LIBRARY_KEY) || "[]");
-    if (books.length) renderBooks();
+let books = JSON.parse(localStorage.getItem(LIBRARY_KEY) || "[]");
 
-    function renderBooks() {
-      libraryContent.innerHTML = "";
-      books.forEach((book, i) => {
-        const li = document.createElement("li");
-        li.className = "book-item";
-        li.innerHTML = `<a href="${book.url}" target="_blank">${book.name}</a>`;
+renderBooks();
 
-        if (editForm.style.display === "block") {
-          const delBtn = document.createElement("span");
-          delBtn.textContent = "🗑";
-          delBtn.className = "remove-btn";
-          delBtn.onclick = () => {
-            books.splice(i, 1);
-            saveBooks();
-            renderBooks();
-          };
-          li.appendChild(delBtn);
-        }
+function renderBooks() {
+  libraryContent.innerHTML = "";
+  books.forEach((book, index) => {
+    const li = document.createElement("li");
+    li.className = "book-item";
+    li.innerHTML = `<a href="${book.url}" target="_blank">${book.name}</a>`;
 
-        libraryContent.appendChild(li);
-      });
-    }
-
-    function saveBooks() {
-      localStorage.setItem(LIBRARY_KEY, JSON.stringify(books));
-    }
-
-    editBtn.addEventListener("click", () => {
-      const pass = prompt("أدخل كلمة المرور للتعديل:");
-      if (pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-      editForm.style.display = "block";
-      renderBooks();
-    });
-
-    addBookBtn.addEventListener("click", () => {
-      const name = bookName.value.trim();
-      const url = bookURL.value.trim();
-      if (!name || !url) return alert("الرجاء إدخال اسم الكتاب والرابط");
-      books.push({ name, url });
-      bookName.value = "";
-      bookURL.value = "";
+    const delBtn = document.createElement("span");
+    delBtn.textContent = "🗑";
+    delBtn.className = "remove-btn";
+    if(editForm.style.display === "block") delBtn.style.display = "inline";
+    delBtn.onclick = () => {
+      books.splice(index, 1);
       saveBooks();
       renderBooks();
+    };
+    li.appendChild(delBtn);
+
+    libraryContent.appendChild(li);
+  });
+}
+
+function saveBooks() {
+  localStorage.setItem(LIBRARY_KEY, JSON.stringify(books));
+}
+
+editBtn.addEventListener("click", () => {
+  const pass = prompt("أدخل كلمة المرور للتعديل:");
+  if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
+  editForm.style.display = "block";
+  renderBooks();
+});
+
+addBookBtn.addEventListener("click", () => {
+  const name = bookNameInput.value.trim();
+  const url = bookURLInput.value.trim();
+  if(!name || !url) return alert("الرجاء إدخال اسم الكتاب والرابط");
+
+  books.push({ name, url });
+  bookNameInput.value = "";
+  bookURLInput.value = "";
+  saveBooks();
+  renderBooks();
+});
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+const FIREBASE_ADMIN_PASS = "SuperSecret123";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
+  authDomain: "alebdaa3-934f1.firebaseapp.com",
+  projectId: "alebdaa3-934f1",
+  storageBucket: "alebdaa3-934f1.appspot.com",
+  messagingSenderId: "847563462029",
+  appId: "1:847563462029:web:0938bbc4677cdfe44899c4"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Save book to Firebase
+window.addBookFirebase = async function(){
+  const pass = prompt("Enter admin password:");
+  if(pass !== FIREBASE_ADMIN_PASS) return alert("Wrong password!");
+  const name = bookNameInput.value.trim();
+  const url = bookURLInput.value.trim();
+  if(!name || !url) return alert("Enter book name and URL");
+  await addDoc(collection(db,"library"),{name,url});
+  bookNameInput.value="";
+  bookURLInput.value="";
+};
+
+// Real-time update
+document.addEventListener("DOMContentLoaded",()=>{
+  const libraryList = libraryContent;
+  onSnapshot(collection(db,"library"), snapshot=>{
+    snapshot.forEach(doc=>{
+      const data = doc.data();
+      const exists = Array.from(libraryList.children).some(li=>li.querySelector('a')?.textContent===data.name);
+      if(!exists){
+        const li = document.createElement("li");
+        li.className="book-item";
+        li.innerHTML=`<a href="${data.url}" target="_blank">${data.name}</a>`;
+        libraryList.appendChild(li);
+      }
     });
-  </script>
+  });
+});
+</script>
+
 </body>
 </html>
