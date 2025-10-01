@@ -49,77 +49,11 @@
   <p>© 2025 بوابة الإبداع</p>
 </footer>
 
-<script>
-const ADMIN_PASS = "Admin_2002";
-const RULES_KEY = "bawabatalibda3_rules";
-
-const rulesContent = document.getElementById("rulesContent");
-const editBtn = document.getElementById("editRulesBtn");
-const editForm = document.getElementById("editRulesForm");
-const ruleInputField = document.getElementById("ruleInputField");
-const addRuleBtn = document.getElementById("addRuleBtn");
-
-// Load saved rules or default rules
-let rules = JSON.parse(localStorage.getItem(RULES_KEY) || '[]');
-if(!rules.length){
-  rules = [
-    "الالتزام بالحضور والانضباط.",
-    "احترام الزملاء والمعلمين.",
-    "المحافظة على مرافق المدرسة."
-  ];
-  saveRules();
-}
-
-renderRules();
-
-function renderRules(){
-  rulesContent.innerHTML = "";
-  rules.forEach((rule,index)=>{
-    const li = document.createElement("li");
-    li.className = "rule-item";
-    li.textContent = rule;
-
-    const delBtn = document.createElement("span");
-    delBtn.textContent = "🗑";
-    delBtn.className = "remove-btn";
-    if(editForm.style.display==="block") delBtn.style.display="inline";
-    delBtn.onclick = ()=>{
-      rules.splice(index,1);
-      saveRules();
-      renderRules();
-    };
-    li.appendChild(delBtn);
-
-    rulesContent.appendChild(li);
-  });
-}
-
-function saveRules(){
-  localStorage.setItem(RULES_KEY, JSON.stringify(rules));
-}
-
-editBtn.addEventListener("click", ()=>{
-  const pass = prompt("أدخل كلمة المرور للتعديل:");
-  if(pass!==ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-  editForm.style.display="block";
-  renderRules();
-});
-
-addRuleBtn.addEventListener("click", ()=>{
-  const val = ruleInputField.value.trim();
-  if(!val) return alert("الرجاء إدخال نص القانون");
-  rules.push(val);
-  ruleInputField.value="";
-  saveRules();
-  renderRules();
-});
-</script>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
-const FIREBASE_ADMIN_PASS = "SuperSecret123";
+const ADMIN_PASS = "SuperSecret123";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
@@ -133,8 +67,74 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Optional: sync rules with Firebase if needed
-// Example: window.addRuleFirebase = async () => {...};
+const editBtn = document.getElementById("editRulesBtn");
+const editForm = document.getElementById("editRulesForm");
+const ruleInputField = document.getElementById("ruleInputField");
+const addRuleBtn = document.getElementById("addRuleBtn");
+const rulesContent = document.getElementById("rulesContent");
+
+// Load rules from Firebase
+async function renderRules() {
+  const docRef = doc(db, "rules", "list");
+  const docSnap = await getDoc(docRef);
+  rulesContent.innerHTML = "";
+  if(docSnap.exists()) {
+    const rules = docSnap.data().rules || [];
+    rules.forEach((rule, i) => {
+      const li = document.createElement("li");
+      li.className = "rule-item";
+      li.textContent = rule;
+
+      // Remove button in edit mode
+      const delBtn = document.createElement("span");
+      delBtn.textContent = "🗑";
+      delBtn.className = "remove-btn";
+      if(editForm.style.display === "block") delBtn.style.display = "inline";
+      delBtn.onclick = async () => {
+        rules.splice(i,1);
+        await setDoc(doc(db,"rules","list"), { rules });
+      };
+      li.appendChild(delBtn);
+
+      rulesContent.appendChild(li);
+    });
+  }
+}
+
+// Realtime updates
+onSnapshot(doc(db,"rules","list"), docSnap => {
+  if(docSnap.exists()) {
+    const rules = docSnap.data().rules || [];
+    rulesContent.innerHTML = "";
+    rules.forEach(rule => {
+      const li = document.createElement("li");
+      li.className = "rule-item";
+      li.textContent = rule;
+      rulesContent.appendChild(li);
+    });
+  }
+});
+
+// Admin edit
+editBtn.addEventListener("click", async ()=>{
+  const pass = prompt("أدخل كلمة المرور للتعديل:");
+  if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
+  editForm.style.display = "block";
+  renderRules();
+});
+
+// Add new rule
+addRuleBtn.addEventListener("click", async ()=>{
+  const val = ruleInputField.value.trim();
+  if(!val) return alert("الرجاء إدخال نص القانون");
+  const docRef = doc(db,"rules","list");
+  const docSnap = await getDoc(docRef);
+  let rules = [];
+  if(docSnap.exists()) rules = docSnap.data().rules || [];
+  rules.push(val);
+  await setDoc(docRef, { rules });
+  ruleInputField.value="";
+});
 </script>
 
 </body>
