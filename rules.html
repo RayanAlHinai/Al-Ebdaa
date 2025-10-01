@@ -33,7 +33,11 @@
       <button id="editRulesBtn" class="small-btn">✏️ تعديل القوانين</button>
     </h2>
 
-    <ul id="rulesContent"></ul>
+    <ul id="rulesContent">
+      <li class="rule-item">الالتزام بالحضور والانضباط.</li>
+      <li class="rule-item">احترام الزملاء والمعلمين.</li>
+      <li class="rule-item">المحافظة على مرافق المدرسة.</li>
+    </ul>
 
     <!-- Edit Form -->
     <div id="editRulesForm">
@@ -46,71 +50,62 @@
     <p>© 2025 بوابة الإبداع</p>
   </footer>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
-    import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDtZ20xX1ly8XnvvN4Q-LvP_YWXfQs3HlU",
-      authDomain: "alebdaa-e25be.firebaseapp.com",
-      projectId: "alebdaa-e25be",
-      storageBucket: "alebdaa-e25be.appspot.com",
-      messagingSenderId: "444943642971",
-      appId: "1:444943642971:web:fc1ce77de0a9c53d25ea7e",
-      measurementId: "G-2E6PLZ7LHJ"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    getAnalytics(app);
-    const db = getFirestore(app);
-
+  <script>
     const ADMIN_PASS = "Admin_2002";
+    const RULES_KEY = "bawabatalibda3_rules";
+
     const rulesContent = document.getElementById("rulesContent");
     const editBtn = document.getElementById("editRulesBtn");
     const editForm = document.getElementById("editRulesForm");
     const ruleInput = document.getElementById("ruleInput");
+    const addRuleBtn = document.getElementById("addRuleBtn");
 
-    let editMode = false;
-
-    const rulesCollection = collection(db, "rules");
-
-    editBtn.addEventListener("click", () => {
-      const pass = prompt("أدخل كلمة المرور للتعديل:");
-      if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-      editMode = true;
-      editForm.style.display = "block";
-    });
-
-    addRuleBtn.addEventListener("click", async () => {
-      const val = ruleInput.value.trim();
-      if(!val) return alert("الرجاء إدخال نص القانون");
-      await addDoc(rulesCollection, { text: val });
-      ruleInput.value = "";
-    });
+    // Load saved rules
+    let rules = JSON.parse(localStorage.getItem(RULES_KEY) || "[]");
+    if (rules.length) renderRules();
 
     function renderRules() {
-      onSnapshot(rulesCollection, snapshot => {
-        rulesContent.innerHTML = "";
-        snapshot.forEach(docSnap => {
-          const li = document.createElement("li");
-          li.className = "rule-item";
-          li.textContent = docSnap.data().text;
+      rulesContent.innerHTML = "";
+      rules.forEach((rule, i) => {
+        const li = document.createElement("li");
+        li.className = "rule-item";
+        li.textContent = rule;
 
-          if(editMode) {
-            const delBtn = document.createElement("span");
-            delBtn.textContent = "🗑";
-            delBtn.className = "remove-btn";
-            delBtn.onclick = async () => { await deleteDoc(doc(db, "rules", docSnap.id)); };
-            li.appendChild(delBtn);
-          }
+        if (editForm.style.display === "block") {
+          const delBtn = document.createElement("span");
+          delBtn.textContent = "🗑";
+          delBtn.className = "remove-btn";
+          delBtn.onclick = () => {
+            rules.splice(i, 1);
+            saveRules();
+            renderRules();
+          };
+          li.appendChild(delBtn);
+        }
 
-          rulesContent.appendChild(li);
-        });
+        rulesContent.appendChild(li);
       });
     }
 
-    renderRules();
+    function saveRules() {
+      localStorage.setItem(RULES_KEY, JSON.stringify(rules));
+    }
+
+    editBtn.addEventListener("click", () => {
+      const pass = prompt("أدخل كلمة المرور للتعديل:");
+      if (pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
+      editForm.style.display = "block";
+      renderRules();
+    });
+
+    addRuleBtn.addEventListener("click", () => {
+      const val = ruleInput.value.trim();
+      if (!val) return alert("الرجاء إدخال نص القانون");
+      rules.push(val);
+      ruleInput.value = "";
+      saveRules();
+      renderRules();
+    });
   </script>
 </body>
 </html>
