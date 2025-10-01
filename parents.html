@@ -7,11 +7,11 @@
   <style>
     body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
     .parents-steps { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-    .step { border:1px solid #ccc; padding:10px; border-radius:5px; width:220px; display:flex; align-items:center; gap:10px; }
-    .blue { background-color:#d0e7ff; }
-    .teal { background-color:#c0f0f0; }
-    .green { background-color:#d4ffd4; }
-    .yellow { background-color:#fff5b1; }
+    .step { padding:10px; border-radius:5px; width:200px; color:#fff; display:flex; align-items:center; gap:10px; }
+    .blue { background-color:#3498db; }
+    .teal { background-color:#1abc9c; }
+    .green { background-color:#2ecc71; }
+    .yellow { background-color:#f1c40f; color:#000; }
     .step span { font-size:24px; }
   </style>
 </head>
@@ -42,24 +42,23 @@
 </footer>
 
 <script>
-// Example parent advice (add or remove advice by code)
+// Sample parent advice (add/remove by code here)
 const parentAdvice = [
-  { icon: "⚖️", text: "التوازن أساس التربية: كونوا حازمين في القيم، مرنين في الأسلوب" },
-  { icon: "🪞", text: "أبناؤكم مرآة لكم: ما يرونه فيكم من سلوك وقيم ينعكس في حياتهم اليومية أكثر مما يرونه في الكتب أو يسمعونه في المدرسة" }
+  { icon: "🏫", text: "التوازن أساس التربية: كونوا حازمين في القيم، مرنين في الأسلوب", color: "blue" },
+  { icon: "🎓", text: "أبناؤكم مرآة لكم: ما يرونه فيكم من سلوك وقيم ينعكس في حياتهم اليومية أكثر مما يرونه في الكتب أو يسمعونه في المدرسة", color: "teal" },
+  //{ icon: "⚽", text: "تشجيع الأبناء على الاشتراك في الأنشطة المختلفة", color: "green" },
+  //{ icon: "🎯", text: "مساعدة الأبناء على تحديد أهدافهم في الحياة", color: "yellow" },
+ // { icon: "📚", text: "متابعة الواجبات المنزلية والتأكد من إكمالها", color: "blue" },
+ // { icon: "💬", text: "التحدث مع الأبناء عن يومهم وأخبار المدرسة", color: "teal" }
 ];
 
 // Display parent advice
-const parentsContainer = document.getElementById("parentsContent");
+const parentsContent = document.getElementById("parentsContent");
 parentAdvice.forEach(item => {
   const div = document.createElement("div");
-  div.className = "step";
-  if(item.icon === "🏫") div.classList.add("blue");
-  else if(item.icon === "🎓") div.classList.add("teal");
-  else if(item.icon === "⚽") div.classList.add("green");
-  else if(item.icon === "🎯") div.classList.add("yellow");
-
+  div.className = `step ${item.color}`;
   div.innerHTML = `<span>${item.icon}</span><p>${item.text}</p>`;
-  parentsContainer.appendChild(div);
+  parentsContent.appendChild(div);
 });
 </script>
 
