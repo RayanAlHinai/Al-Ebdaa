@@ -1,20 +1,19 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>همسات لولي الأمر</title>
-<link rel="stylesheet" href="style.css">
-<style>
-  .small-btn { padding:5px 10px; border-radius:5px; cursor:pointer; margin-left:10px; }
-  #editParentsForm { display:none; margin-top:10px; }
-  .parents-steps { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-  .step { padding:10px; border-radius:5px; flex:1 1 200px; color:#fff; position:relative; }
-  .blue { background:#2196F3; }
-  .teal { background:#009688; }
-  .green { background:#4CAF50; }
-  .yellow { background:#FFC107; color:#000; }
-  .remove-btn { position:absolute; top:5px; left:5px; cursor:pointer; color:red; font-weight:bold; display:none; }
-</style>
+  <meta charset="UTF-8">
+  <title>همسات لولي الأمر</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
+    .parents-steps { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+    .step { border:1px solid #ccc; padding:10px; border-radius:5px; width:220px; display:flex; align-items:center; gap:10px; }
+    .blue { background-color:#d0e7ff; }
+    .teal { background-color:#c0f0f0; }
+    .green { background-color:#d4ffd4; }
+    .yellow { background-color:#fff5b1; }
+    .step span { font-size:24px; }
+  </style>
 </head>
 <body>
 
@@ -33,112 +32,35 @@
 </nav>
 
 <section id="parents">
-  <h2 style="display:flex; justify-content:space-between; align-items:center;">
-    دور أولياء الأمور في تحقيق الانضباط المدرسي
-    <button id="editParentsBtn" class="small-btn">✏️ تعديل المحتوى</button>
-  </h2>
+  <h2>دور أولياء الأمور في تحقيق الانضباط المدرسي</h2>
 
   <div class="parents-steps" id="parentsContent"></div>
-
-  <!-- Edit form -->
-  <div id="editParentsForm">
-    <textarea id="parentsTextarea" rows="6" style="width:100%;"></textarea><br>
-    <button id="saveParentsBtn">💾 حفظ التعديلات</button>
-  </div>
 </section>
 
 <footer>
   <p>© 2025 بوابة الإبداع</p>
 </footer>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+<script>
+// Example parent advice (add or remove advice by code)
+const parentAdvice = [
+  { icon: "⚖️", text: "التوازن أساس التربية: كونوا حازمين في القيم، مرنين في الأسلوب" },
+  { icon: "🪞", text: "أبناؤكم مرآة لكم: ما يرونه فيكم من سلوك وقيم ينعكس في حياتهم اليومية أكثر مما يرونه في الكتب أو يسمعونه في المدرسة" }
+];
 
-const ADMIN_PASS = "SuperSecret123";
+// Display parent advice
+const parentsContainer = document.getElementById("parentsContent");
+parentAdvice.forEach(item => {
+  const div = document.createElement("div");
+  div.className = "step";
+  if(item.icon === "🏫") div.classList.add("blue");
+  else if(item.icon === "🎓") div.classList.add("teal");
+  else if(item.icon === "⚽") div.classList.add("green");
+  else if(item.icon === "🎯") div.classList.add("yellow");
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
-  authDomain: "alebdaa3-934f1.firebaseapp.com",
-  projectId: "alebdaa3-934f1",
-  storageBucket: "alebdaa3-934f1.appspot.com",
-  messagingSenderId: "847563462029",
-  appId: "1:847563462029:web:0938bbc4677cdfe44899c4"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const editBtn = document.getElementById("editParentsBtn");
-const editForm = document.getElementById("editParentsForm");
-const textarea = document.getElementById("parentsTextarea");
-const saveBtn = document.getElementById("saveParentsBtn");
-const parentsContent = document.getElementById("parentsContent");
-
-let editMode = false;
-
-// Render steps from Firebase
-async function renderParents() {
-  const docRef = doc(db, "parents", "steps");
-  const docSnap = await getDoc(docRef);
-  parentsContent.innerHTML = "";
-  if(docSnap.exists()) {
-    const steps = docSnap.data().steps;
-    steps.forEach((step,i) => {
-      const div = document.createElement("div");
-      div.className = `step ${step.color}`;
-      div.innerHTML = `<span>${step.icon}</span><p>${step.text}</p>`;
-      parentsContent.appendChild(div);
-    });
-  }
-}
-
-// Real-time updates
-onSnapshot(doc(db,"parents","steps"), docSnap => {
-  if(docSnap.exists()) {
-    parentsContent.innerHTML = "";
-    const steps = docSnap.data().steps;
-    steps.forEach(step => {
-      const div = document.createElement("div");
-      div.className = `step ${step.color}`;
-      div.innerHTML = `<span>${step.icon}</span><p>${step.text}</p>`;
-      parentsContent.appendChild(div);
-    });
-  }
+  div.innerHTML = `<span>${item.icon}</span><p>${item.text}</p>`;
+  parentsContainer.appendChild(div);
 });
-
-// Admin edit
-editBtn.addEventListener("click", async () => {
-  const pass = prompt("أدخل كلمة المرور للتعديل:");
-  if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-  editMode = true;
-  editForm.style.display = "block";
-
-  // Load current text as JSON in textarea
-  const docRef = doc(db, "parents", "steps");
-  const docSnap = await getDoc(docRef);
-  if(docSnap.exists()) {
-    textarea.value = JSON.stringify(docSnap.data().steps, null, 2);
-  }
-});
-
-// Save edits
-saveBtn.addEventListener("click", async () => {
-  let steps;
-  try {
-    steps = JSON.parse(textarea.value);
-    if(!Array.isArray(steps)) throw new Error();
-  } catch(e) {
-    return alert("⚠️ صيغة غير صحيحة. يجب أن تكون مصفوفة JSON");
-  }
-
-  await setDoc(doc(db,"parents","steps"), { steps });
-  alert("✅ تم حفظ التعديلات");
-  editForm.style.display = "none";
-});
-  
-// Initial render
-renderParents();
 </script>
 
 </body>
