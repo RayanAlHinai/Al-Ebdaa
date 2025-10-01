@@ -6,12 +6,9 @@
 <link rel="stylesheet" href="style.css">
 <style>
   body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
-  .small-btn { padding:5px 10px; border-radius:5px; cursor:pointer; }
-  #editRulesForm { display:none; margin-top:10px; }
-  #editRulesForm input { width:80%; padding:5px; margin-bottom:5px; display:block; }
-  #editRulesForm button { padding:5px 10px; }
-  .rule-item { margin-bottom:5px; position:relative; }
-  .remove-btn { margin-left:10px; cursor:pointer; color:red; display:none; position:absolute; left:-25px; top:0; }
+  .rules-container { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+  .rule-card { border:1px solid #ccc; border-radius:5px; padding:5px; width:200px; text-align:center; }
+  .rule-card img { width:100%; height:auto; border-radius:5px; }
 </style>
 </head>
 <body>
@@ -31,109 +28,28 @@
 </nav>
 
 <section>
-  <h2>
-    اللائحة المدرسية
-    <button id="editRulesBtn" class="small-btn">✏️ تعديل القوانين</button>
-  </h2>
+  <h2>اللائحة المدرسية</h2>
 
-  <ul id="rulesContent"></ul>
-
-  <!-- Edit Form -->
-  <div id="editRulesForm">
-    <input type="text" id="ruleInputField" placeholder="أضف قانون جديد">
-    <button id="addRuleBtn">➕ إضافة</button>
-  </div>
+  <div class="rules-container" id="rulesContainer"></div>
 </section>
 
 <footer>
   <p>© 2025 بوابة الإبداع</p>
 </footer>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+<script>
+// Example rules images (add/remove here by code)
+const rules = [
+  { image: "assets/rule1.jpg"}
+];
 
-const ADMIN_PASS = "SuperSecret123";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
-  authDomain: "alebdaa3-934f1.firebaseapp.com",
-  projectId: "alebdaa3-934f1",
-  storageBucket: "alebdaa3-934f1.appspot.com",
-  messagingSenderId: "847563462029",
-  appId: "1:847563462029:web:0938bbc4677cdfe44899c4"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const editBtn = document.getElementById("editRulesBtn");
-const editForm = document.getElementById("editRulesForm");
-const ruleInputField = document.getElementById("ruleInputField");
-const addRuleBtn = document.getElementById("addRuleBtn");
-const rulesContent = document.getElementById("rulesContent");
-
-// Load rules from Firebase
-async function renderRules() {
-  const docRef = doc(db, "rules", "list");
-  const docSnap = await getDoc(docRef);
-  rulesContent.innerHTML = "";
-  if(docSnap.exists()) {
-    const rules = docSnap.data().rules || [];
-    rules.forEach((rule, i) => {
-      const li = document.createElement("li");
-      li.className = "rule-item";
-      li.textContent = rule;
-
-      // Remove button in edit mode
-      const delBtn = document.createElement("span");
-      delBtn.textContent = "🗑";
-      delBtn.className = "remove-btn";
-      if(editForm.style.display === "block") delBtn.style.display = "inline";
-      delBtn.onclick = async () => {
-        rules.splice(i,1);
-        await setDoc(doc(db,"rules","list"), { rules });
-      };
-      li.appendChild(delBtn);
-
-      rulesContent.appendChild(li);
-    });
-  }
-}
-
-// Realtime updates
-onSnapshot(doc(db,"rules","list"), docSnap => {
-  if(docSnap.exists()) {
-    const rules = docSnap.data().rules || [];
-    rulesContent.innerHTML = "";
-    rules.forEach(rule => {
-      const li = document.createElement("li");
-      li.className = "rule-item";
-      li.textContent = rule;
-      rulesContent.appendChild(li);
-    });
-  }
-});
-
-// Admin edit
-editBtn.addEventListener("click", async ()=>{
-  const pass = prompt("أدخل كلمة المرور للتعديل:");
-  if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-  editForm.style.display = "block";
-  renderRules();
-});
-
-// Add new rule
-addRuleBtn.addEventListener("click", async ()=>{
-  const val = ruleInputField.value.trim();
-  if(!val) return alert("الرجاء إدخال نص القانون");
-  const docRef = doc(db,"rules","list");
-  const docSnap = await getDoc(docRef);
-  let rules = [];
-  if(docSnap.exists()) rules = docSnap.data().rules || [];
-  rules.push(val);
-  await setDoc(docRef, { rules });
-  ruleInputField.value="";
+// Display rules
+const rulesContainer = document.getElementById("rulesContainer");
+rules.forEach(rule => {
+  const card = document.createElement("div");
+  card.className = "rule-card";
+  card.innerHTML = `<img src="${rule.image}" alt="${rule.alt}">`;
+  rulesContainer.appendChild(card);
 });
 </script>
 
