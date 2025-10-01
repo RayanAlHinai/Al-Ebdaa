@@ -52,97 +52,11 @@
     <p>© 2025 بوابة الإبداع</p>
   </footer>
 
-  <!-- LocalStorage Achievements Script -->
-  <script>
-    const ADMIN_PASS = "Admin_2002";
-    const ACHIEVEMENTS_KEY = "bawabatalibda3_achievements";
-
-    const achievementsContent = document.getElementById("achievementsContent");
-    const editBtn = document.getElementById("editAchievementsBtn");
-    const editForm = document.getElementById("editAchievementsForm");
-    const titleInput = document.getElementById("ach-title");
-    const contentInput = document.getElementById("ach-content");
-    const imageInput = document.getElementById("ach-file");
-    const saveBtn = document.getElementById("saveAchievementsBtn");
-
-    let achievements = JSON.parse(localStorage.getItem(ACHIEVEMENTS_KEY) || "[]");
-
-    function renderAchievements() {
-      achievementsContent.innerHTML = "";
-      achievements.forEach((ach, i) => {
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `<strong>${ach.title}</strong><p>${ach.content}</p>`;
-        if (ach.image) {
-          const img = document.createElement("img");
-          img.src = ach.image;
-          div.appendChild(img);
-        }
-
-        // Delete button only visible when form is open
-        if (editForm.style.display === "block") {
-          const delBtn = document.createElement("span");
-          delBtn.textContent = "🗑";
-          delBtn.className = "remove-btn";
-          delBtn.onclick = () => {
-            achievements.splice(i, 1);
-            saveAchievements();
-            renderAchievements();
-          };
-          div.appendChild(delBtn);
-        }
-
-        achievementsContent.appendChild(div);
-      });
-    }
-
-    function saveAchievements() {
-      localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(achievements));
-    }
-
-    editBtn.addEventListener("click", () => {
-      const pass = prompt("أدخل كلمة المرور للتعديل:");
-      if (pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-      editForm.style.display = "block";
-      renderAchievements();
-    });
-
-    saveBtn.addEventListener("click", () => {
-      const title = titleInput.value.trim();
-      const content = contentInput.value.trim();
-      if (!title || !content) return alert("الرجاء إدخال عنوان ووصف الإنجاز");
-
-      if (imageInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          achievements.push({ title, content, image: e.target.result });
-          titleInput.value = "";
-          contentInput.value = "";
-          imageInput.value = "";
-          saveAchievements();
-          renderAchievements();
-        };
-        reader.readAsDataURL(imageInput.files[0]);
-      } else {
-        achievements.push({ title, content });
-        titleInput.value = "";
-        contentInput.value = "";
-        saveAchievements();
-        renderAchievements();
-      }
-    });
-
-    // Initial render
-    renderAchievements();
-  </script>
-
   <!-- Firebase Module Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
-
-    const FIREBASE_ADMIN_PASS = "SuperSecret123";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
@@ -157,38 +71,74 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    // Example: Add achievement to Firebase
-    window.addAchievementFirebase = async function() {
-      const pass = prompt("Enter admin password:");
-      if (pass !== FIREBASE_ADMIN_PASS) return alert("Wrong password!");
-      const title = document.getElementById("ach-title").value.trim();
-      const file = document.getElementById("ach-file").files[0];
-      if (!title || !file) return alert("Please enter title and select image.");
+    const ADMIN_PASS = "SuperSecret123";
 
-      const storageRef = ref(storage, "achievements/" + file.name);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+    const editBtn = document.getElementById("editAchievementsBtn");
+    const editForm = document.getElementById("editAchievementsForm");
+    const titleInput = document.getElementById("ach-title");
+    const contentInput = document.getElementById("ach-content");
+    const imageInput = document.getElementById("ach-file");
+    const saveBtn = document.getElementById("saveAchievementsBtn");
+    const achList = document.getElementById("achievementsContent");
 
-      await addDoc(collection(db, "achievements"), { title, image: url });
+    let editMode = false;
 
-      document.getElementById("ach-title").value = "";
-      document.getElementById("ach-file").value = "";
-    };
+    editBtn.addEventListener("click", () => {
+      const pass = prompt("أدخل كلمة المرور للتعديل:");
+      if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
+      editMode = true;
+      editForm.style.display = "block";
+    });
 
-    // Subscribe to realtime Firebase updates
-    document.addEventListener("DOMContentLoaded", () => {
-      const achList = document.getElementById("achievementsContent"); // Render in same div
-      onSnapshot(collection(db, "achievements"), snapshot => {
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const exists = Array.from(achList.children).some(c => c.querySelector('strong')?.textContent === data.title);
-          if (!exists) {
-            const div = document.createElement("div");
-            div.className = "card";
-            div.innerHTML = `<strong>${data.title}</strong><img src="${data.image}" />`;
-            achList.appendChild(div);
-          }
-        });
+    saveBtn.addEventListener("click", async () => {
+      const title = titleInput.value.trim();
+      const content = contentInput.value.trim();
+      const file = imageInput.files[0];
+
+      if(!title || !content) return alert("⚠️ الرجاء إدخال عنوان ووصف الإنجاز");
+
+      let imageURL = "";
+      if(file){
+        const storageRef = ref(storage, "achievements/" + Date.now() + "_" + file.name);
+        await uploadBytes(storageRef, file);
+        imageURL = await getDownloadURL(storageRef);
+      }
+
+      await addDoc(collection(db, "achievements"), { title, content, image: imageURL, createdAt: Date.now() });
+
+      // Clear inputs
+      titleInput.value="";
+      contentInput.value="";
+      imageInput.value="";
+    });
+
+    // Real-time updates
+    onSnapshot(collection(db, "achievements"), snapshot => {
+      achList.innerHTML = "";
+      const sorted = snapshot.docs.sort((a,b) => b.data().createdAt - a.data().createdAt);
+      sorted.forEach(docSnap => {
+        const data = docSnap.data();
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `<strong>${data.title}</strong><p>${data.content}</p>`;
+        if(data.image) card.innerHTML += `<img src="${data.image}" />`;
+
+        // Remove button for admin
+        if(editMode){
+          const removeBtn = document.createElement("span");
+          removeBtn.className = "remove-btn";
+          removeBtn.textContent = "🗑";
+          removeBtn.onclick = async () => {
+            if(data.image){
+              const imgRef = ref(storage, data.image);
+              try { await deleteObject(imgRef); } catch(err){console.log(err);}
+            }
+            await deleteDoc(doc(db,"achievements",docSnap.id));
+          };
+          card.appendChild(removeBtn);
+        }
+
+        achList.appendChild(card);
       });
     });
   </script>
