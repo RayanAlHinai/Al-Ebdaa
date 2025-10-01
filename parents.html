@@ -10,6 +10,7 @@
   </style>
 </head>
 <body>
+
 <header>
   <img src="assets/logo2.png" alt="Left Logo" class="logo-left">
   <img src="assets/logo1.png" alt="Right Logo" class="logo-right">
@@ -30,7 +31,12 @@
     <button id="editParentsBtn" class="small-btn">✏️ تعديل المحتوى</button>
   </h2>
 
-  <div class="parents-steps" id="parentsContent"></div>
+  <div class="parents-steps" id="parentsContent">
+    <div class="step blue"><span>🏫</span><p>تحفيز الأبناء على الذهاب إلى المدرسة</p></div>
+    <div class="step teal"><span>🎓</span><p>إعلام الأبناء بأهمية التعليم</p></div>
+    <div class="step green"><span>⚽</span><p>تشجيع الأبناء على الاشتراك في الأنشطة المختلفة</p></div>
+    <div class="step yellow"><span>🎯</span><p>مساعدة الأبناء على تحديد أهدافهم في الحياة</p></div>
+  </div>
 
   <!-- Edit form -->
   <div id="editParentsForm">
@@ -43,80 +49,6 @@
   <p>© 2025 بوابة الإبداع</p>
 </footer>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
-  import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDtZ20xX1ly8XnvvN4Q-LvP_YWXfQs3HlU",
-    authDomain: "alebdaa-e25be.firebaseapp.com",
-    projectId: "alebdaa-e25be",
-    storageBucket: "alebdaa-e25be.appspot.com",
-    messagingSenderId: "444943642971",
-    appId: "1:444943642971:web:fc1ce77de0a9c53d25ea7e",
-    measurementId: "G-2E6PLZ7LHJ"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  getAnalytics(app);
-  const db = getFirestore(app);
-
-  const ADMIN_PASS = "Admin_2002";
-  const parentsContent = document.getElementById("parentsContent");
-  const editBtn = document.getElementById("editParentsBtn");
-  const editForm = document.getElementById("editParentsForm");
-  const textarea = document.getElementById("parentsTextarea");
-
-  let editMode = false;
-
-  // Render content in real-time
-  const parentsDoc = doc(db, "parents", "steps");
-  onSnapshot(parentsDoc, docSnap => {
-    if(docSnap.exists()) {
-      const data = docSnap.data();
-      parentsContent.innerHTML = "";
-      data.steps.forEach(step => {
-        const div = document.createElement("div");
-        div.className = `step ${step.color}`;
-        div.innerHTML = `<span>${step.icon}</span><p>${step.text}</p>`;
-        parentsContent.appendChild(div);
-      });
-
-      // Load for edit form
-      if(editMode) {
-        textarea.value = data.steps.map(s => `${s.icon} ${s.text}`).join("\n");
-      }
-    } else {
-      // Initial content if not exists
-      const defaultSteps = [
-        {icon:"🏫", text:"تحفيز الأبناء على الذهاب إلى المدرسة", color:"blue"},
-        {icon:"🎓", text:"إعلام الأبناء بأهمية التعليم", color:"teal"},
-        {icon:"⚽", text:"تشجيع الأبناء على الاشتراك في الأنشطة المختلفة", color:"green"},
-        {icon:"🎯", text:"مساعدة الأبناء على تحديد أهدافهم في الحياة", color:"yellow"}
-      ];
-      setDoc(parentsDoc, { steps: defaultSteps });
-    }
-  });
-
-  editBtn.addEventListener("click", () => {
-    const pass = prompt("أدخل كلمة المرور للتعديل:");
-    if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-    editMode = true;
-    editForm.style.display = "block";
-  });
-
-  document.getElementById("saveParentsBtn").addEventListener("click", async () => {
-    const lines = textarea.value.split("\n").map(line => {
-      const match = line.match(/^(\S+)\s+(.*)$/);
-      if(match) return { icon: match[1], text: match[2], color: "blue" }; // default color
-      return null;
-    }).filter(l => l !== null);
-
-    await setDoc(parentsDoc, { steps: lines });
-    alert("✅ تم حفظ التعديلات!");
-  });
-
-</script>
+<script src="script.js"></script>
 </body>
 </html>
