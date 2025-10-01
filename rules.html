@@ -1,111 +1,141 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>قوانين شؤون الطلبة</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    #editRulesForm { display:none; margin-top:10px; }
-    #editRulesForm input { width: 80%; padding:5px; margin-bottom:5px; }
-    #editRulesForm button { padding:5px 10px; }
-    .rule-item { margin-bottom:5px; }
-    .remove-btn { margin-left:10px; cursor:pointer; color:red; }
-  </style>
+<meta charset="UTF-8">
+<title>قوانين شؤون الطلبة</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
+  .small-btn { padding:5px 10px; border-radius:5px; cursor:pointer; }
+  #editRulesForm { display:none; margin-top:10px; }
+  #editRulesForm input { width:80%; padding:5px; margin-bottom:5px; display:block; }
+  #editRulesForm button { padding:5px 10px; }
+  .rule-item { margin-bottom:5px; position:relative; }
+  .remove-btn { margin-left:10px; cursor:pointer; color:red; display:none; position:absolute; left:-25px; top:0; }
+</style>
 </head>
 <body>
-  <header>
-    <img src="assets/logo2.png" alt="Left Logo" class="logo-left">
-    <img src="assets/logo1.png" alt="Right Logo" class="logo-right">
-    <h1>📜 قوانين شؤون الطلبة</h1>
-  </header>
 
-  <nav>
-    <a href="index.html">الرئيسية</a>
-    <a href="talents.html">المواهب</a>
-    <a href="parents.html">همسات لولي الأمر</a>
-    <a href="library.html">المكتبة الإلكترونية</a>
-    <a href="achievements.html">إنجازات المدرسة</a>
-  </nav>
+<header>
+  <img src="assets/logo2.png" alt="Left Logo" class="logo-left">
+  <img src="assets/logo1.png" alt="Right Logo" class="logo-right">
+  <h1>📜 قوانين شؤون الطلبة</h1>
+</header>
 
-  <section>
-    <h2>
-      اللائحة المدرسية
-      <button id="editRulesBtn" class="small-btn">✏️ تعديل القوانين</button>
-    </h2>
+<nav>
+  <a href="index.html">الرئيسية</a>
+  <a href="talents.html">المواهب</a>
+  <a href="parents.html">همسات لولي الأمر</a>
+  <a href="library.html">المكتبة الإلكترونية</a>
+  <a href="achievements.html">إنجازات المدرسة</a>
+</nav>
 
-    <ul id="rulesContent">
-      <li class="rule-item">الالتزام بالحضور والانضباط.</li>
-      <li class="rule-item">احترام الزملاء والمعلمين.</li>
-      <li class="rule-item">المحافظة على مرافق المدرسة.</li>
-    </ul>
+<section>
+  <h2>
+    اللائحة المدرسية
+    <button id="editRulesBtn" class="small-btn">✏️ تعديل القوانين</button>
+  </h2>
 
-    <!-- Edit Form -->
-    <div id="editRulesForm">
-      <input type="text" id="ruleInput" placeholder="أضف قانون جديد">
-      <button id="addRuleBtn">➕ إضافة</button>
-    </div>
-  </section>
+  <ul id="rulesContent"></ul>
 
-  <footer>
-    <p>© 2025 بوابة الإبداع</p>
-  </footer>
+  <!-- Edit Form -->
+  <div id="editRulesForm">
+    <input type="text" id="ruleInputField" placeholder="أضف قانون جديد">
+    <button id="addRuleBtn">➕ إضافة</button>
+  </div>
+</section>
 
-  <script>
-    const ADMIN_PASS = "Admin_2002";
-    const RULES_KEY = "bawabatalibda3_rules";
+<footer>
+  <p>© 2025 بوابة الإبداع</p>
+</footer>
 
-    const rulesContent = document.getElementById("rulesContent");
-    const editBtn = document.getElementById("editRulesBtn");
-    const editForm = document.getElementById("editRulesForm");
-    const ruleInput = document.getElementById("ruleInput");
-    const addRuleBtn = document.getElementById("addRuleBtn");
+<script>
+const ADMIN_PASS = "Admin_2002";
+const RULES_KEY = "bawabatalibda3_rules";
 
-    // Load saved rules
-    let rules = JSON.parse(localStorage.getItem(RULES_KEY) || "[]");
-    if (rules.length) renderRules();
+const rulesContent = document.getElementById("rulesContent");
+const editBtn = document.getElementById("editRulesBtn");
+const editForm = document.getElementById("editRulesForm");
+const ruleInputField = document.getElementById("ruleInputField");
+const addRuleBtn = document.getElementById("addRuleBtn");
 
-    function renderRules() {
-      rulesContent.innerHTML = "";
-      rules.forEach((rule, i) => {
-        const li = document.createElement("li");
-        li.className = "rule-item";
-        li.textContent = rule;
+// Load saved rules or default rules
+let rules = JSON.parse(localStorage.getItem(RULES_KEY) || '[]');
+if(!rules.length){
+  rules = [
+    "الالتزام بالحضور والانضباط.",
+    "احترام الزملاء والمعلمين.",
+    "المحافظة على مرافق المدرسة."
+  ];
+  saveRules();
+}
 
-        if (editForm.style.display === "block") {
-          const delBtn = document.createElement("span");
-          delBtn.textContent = "🗑";
-          delBtn.className = "remove-btn";
-          delBtn.onclick = () => {
-            rules.splice(i, 1);
-            saveRules();
-            renderRules();
-          };
-          li.appendChild(delBtn);
-        }
+renderRules();
 
-        rulesContent.appendChild(li);
-      });
-    }
+function renderRules(){
+  rulesContent.innerHTML = "";
+  rules.forEach((rule,index)=>{
+    const li = document.createElement("li");
+    li.className = "rule-item";
+    li.textContent = rule;
 
-    function saveRules() {
-      localStorage.setItem(RULES_KEY, JSON.stringify(rules));
-    }
-
-    editBtn.addEventListener("click", () => {
-      const pass = prompt("أدخل كلمة المرور للتعديل:");
-      if (pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-      editForm.style.display = "block";
-      renderRules();
-    });
-
-    addRuleBtn.addEventListener("click", () => {
-      const val = ruleInput.value.trim();
-      if (!val) return alert("الرجاء إدخال نص القانون");
-      rules.push(val);
-      ruleInput.value = "";
+    const delBtn = document.createElement("span");
+    delBtn.textContent = "🗑";
+    delBtn.className = "remove-btn";
+    if(editForm.style.display==="block") delBtn.style.display="inline";
+    delBtn.onclick = ()=>{
+      rules.splice(index,1);
       saveRules();
       renderRules();
-    });
-  </script>
+    };
+    li.appendChild(delBtn);
+
+    rulesContent.appendChild(li);
+  });
+}
+
+function saveRules(){
+  localStorage.setItem(RULES_KEY, JSON.stringify(rules));
+}
+
+editBtn.addEventListener("click", ()=>{
+  const pass = prompt("أدخل كلمة المرور للتعديل:");
+  if(pass!==ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
+  editForm.style.display="block";
+  renderRules();
+});
+
+addRuleBtn.addEventListener("click", ()=>{
+  const val = ruleInputField.value.trim();
+  if(!val) return alert("الرجاء إدخال نص القانون");
+  rules.push(val);
+  ruleInputField.value="";
+  saveRules();
+  renderRules();
+});
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+const FIREBASE_ADMIN_PASS = "SuperSecret123";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
+  authDomain: "alebdaa3-934f1.firebaseapp.com",
+  projectId: "alebdaa3-934f1",
+  storageBucket: "alebdaa3-934f1.appspot.com",
+  messagingSenderId: "847563462029",
+  appId: "1:847563462029:web:0938bbc4677cdfe44899c4"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Optional: sync rules with Firebase if needed
+// Example: window.addRuleFirebase = async () => {...};
+</script>
+
 </body>
 </html>
