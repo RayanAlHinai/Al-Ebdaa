@@ -5,11 +5,6 @@
 <title>المواهب</title>
 <link rel="stylesheet" href="style.css">
 <style>
-  .small-btn { padding:5px 10px; border-radius:5px; cursor:pointer; }
-  #editTalentForm { display:none; margin-top:10px; }
-  #editTalentForm input, #editTalentForm textarea { width: 80%; padding:8px; margin-bottom:8px; display:block; font-size:16px; }
-  #editTalentForm button { padding:10px 20px; font-size:16px; }
-
   .card {
     border: 2px solid #ccc;
     padding: 20px;
@@ -25,23 +20,11 @@
     position: relative;
   }
 
-  .card img {
+  .card img, .card video {
     width: 100%;
     max-height: 400px;
-    object-fit: cover;
     margin-top: 15px;
     border-radius: 15px;
-  }
-
-  .remove-btn { 
-    margin-left:10px; 
-    cursor:pointer; 
-    color:red; 
-    font-size:20px; 
-    display:none;
-    position:absolute; 
-    top:10px; 
-    left:10px;
   }
 </style>
 </head>
@@ -62,94 +45,64 @@
 </nav>
 
 <section>
-  <h2 style="display:flex; justify-content:space-between; align-items:center;">
-    عرض مواهب الطلبة
-    <button id="editTalentBtn" class="small-btn">✏️ تعديل المحتوى</button>
-  </h2>
-
+  <h2>عرض مواهب الطلبة</h2>
   <div class="grid" id="talentsContent"></div>
-
-  <div id="editTalentForm">
-    <input type="text" id="talentTitle" placeholder="عنوان الموهبة">
-    <textarea id="talentContent" placeholder="وصف الموهبة"></textarea>
-    <input type="file" id="talentImage" accept="image/*">
-    <button id="saveTalentBtn">📤 رفع وإضافة الموهبة</button>
-  </div>
 </section>
 
 <footer>
   <p>© 2025 بوابة الإبداع</p>
 </footer>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
+<script>
+// Sample talents array - add/remove talents here by code
+const talents = [
+  {
+    title: "رسم فني",
+    content: "الطالبة رشا أبدعت في لوحة فنية.",
+    image: "assets/talent1.jpg"
+  },
+  {
+    title: "رسم فني",
+    content: "الطالب يامن أبدعت في لوحة فنية.",
+    image: "assets/talent2.jpg"
+  },
 
-const ADMIN_PASS = "SuperSecret123";
+  {
+    title: "رسم فني",
+    content: "الطالبة زينب أبدعت في لوحة فنية.",
+    image: "assets/talent3.jpg"
+  },
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDVxMQoTpXZH4GhqlXA7W3LKmQAlF78Vp8",
-  authDomain: "alebdaa3-934f1.firebaseapp.com",
-  projectId: "alebdaa3-934f1",
-  storageBucket: "alebdaa3-934f1.appspot.com",
-  messagingSenderId: "847563462029",
-  appId: "1:847563462029:web:0938bbc4677cdfe44899c4"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-const editBtn = document.getElementById("editTalentBtn");
-const editForm = document.getElementById("editTalentForm");
-const talentTitle = document.getElementById("talentTitle");
-const talentContent = document.getElementById("talentContent");
-const talentImage = document.getElementById("talentImage");
-const saveTalentBtn = document.getElementById("saveTalentBtn");
-const talentsContent = document.getElementById("talentsContent");
-
-// Realtime talents from Firebase
-onSnapshot(collection(db, "talents"), snapshot => {
-  talentsContent.innerHTML = "";
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <h3>${data.title}</h3>
-      <p>${data.content}</p>
-      ${data.image ? `<img src="${data.image}" alt="${data.title}">` : ""}
-    `;
-    talentsContent.appendChild(card);
-  });
-});
-
-// Admin edit
-editBtn.addEventListener("click", () => {
-  const pass = prompt("أدخل كلمة المرور للتعديل:");
-  if(pass !== ADMIN_PASS) return alert("كلمة المرور غير صحيحة ❌");
-  editForm.style.display = "block";
-});
-
-// Save new talent
-saveTalentBtn.addEventListener("click", async () => {
-  const title = talentTitle.value.trim();
-  const content = talentContent.value.trim();
-  if(!title || !content) return alert("الرجاء إدخال عنوان الموهبة ووصفها");
-
-  let imageUrl = "";
-  if(talentImage.files[0]){
-    const file = talentImage.files[0];
-    const storageRef = ref(storage, "talents/" + file.name);
-    await uploadBytes(storageRef, file);
-    imageUrl = await getDownloadURL(storageRef);
+  {
+    title: "رسم فني",
+    content: "الطالبة رسال أبدعت في لوحة فنية.",
+    image: "assets/talent4.jpg"
+  },
+  
+  {
+    title: "عزف على البيانو",
+    content: "الطالبه تقدم عرضاً رائعاً على آلة البيانو في الحفل المدرسي.",
+    video: "assets/talent5.mp4"
   }
+];
 
-  await addDoc(collection(db,"talents"), { title, content, image: imageUrl });
-  talentTitle.value = "";
-  talentContent.value = "";
-  talentImage.value = "";
+// Display talents
+const talentsContent = document.getElementById("talentsContent");
+talents.forEach(talent => {
+  const card = document.createElement("div");
+  card.className = "card";
+
+  // Show image if available, else show video
+  let media = "";
+  if(talent.image) media = `<img src="${talent.image}" alt="${talent.title}">`;
+  else if(talent.video) media = `<video controls src="${talent.video}"></video>`;
+
+  card.innerHTML = `
+    <h3>${talent.title}</h3>
+    <p>${talent.content}</p>
+    ${media}
+  `;
+  talentsContent.appendChild(card);
 });
 </script>
 
