@@ -64,8 +64,18 @@ const newsContainer = document.getElementById("newsContainer");
 news.forEach(item => {
   const card = document.createElement("div");
   card.className = "news-card";
-  const imgTag = item.image ? `<img src="${item.image}" alt="صورة الخبر">` : "";
-  card.innerHTML = `${imgTag}<h3>${item.title}</h3><p>${item.content}</p>`;
+
+  let media = "";
+  if(item.image) {
+    media = `<img src="${item.image}" alt="صورة الخبر">`;
+  } else if(item.video) {
+    media = `<video controls width="100%">
+      <source src="${item.video}" type="video/mp4">
+متصفحك لا يدعم تشغيل الفيديو
+      </video>`;
+  }
+
+  card.innerHTML = `${media}<h3>${item.title}</h3><p>${item.content}</p>`;
   newsContainer.appendChild(card);
 });
 </script>
