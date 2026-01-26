@@ -66,6 +66,15 @@
       achievementsContent.appendChild(div);
     });
   </script>
+  <script type="module">
+    import { saveUser } from "./firebase.js";
+    async function submitForm() {
+      await saveUserForm("Ali", 22);
+      alert("تم الحفظ");
+    }
 
+    window.submitForm = submitForm;
+  </script>
+  
 </body>
 </html>
