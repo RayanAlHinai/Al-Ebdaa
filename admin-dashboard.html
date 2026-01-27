@@ -1,0 +1,48 @@
+<script type="module">
+import { auth } from "./firebase.js";
+import { onAuthStateChanged } from
+"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+onAuthStateChanged(auth, user => {
+  if (!user) {
+    location.href = "admin-login.html";
+  }
+});
+</script>
+<h2>لوحة التحكم</h2>
+
+<input id="title" placeholder="العنوان">
+<textarea id="content" placeholder="المحتوى"></textarea>
+<input type="file" id="file">
+<select id="type">
+  <option value="news">أخبار</option>
+  <option value="talents">مواهب</option>
+  <option value="achievements">إنجازات</option>
+</select>
+<button onclick="add()">إضافة</button>
+
+<script type="module">
+import { addData, storage } from "./firebase.js";
+import { ref, uploadBytes, getDownloadURL } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+window.add = async () => {
+  const file = document.getElementById("file").files[0];
+  let url = "";
+
+  if(file){
+    const r = ref(storage, Date.now()+file.name);
+    await uploadBytes(r, file);
+    url = await getDownloadURL(r);
+  }
+
+  await addData(type.value, {
+    title: title.value,
+    content: content.value,
+    image: file?.type.startsWith("image") ? url : "",
+    video: file?.type.startsWith("video") ? url : ""
+  });
+
+  alert("تمت الإضافة ✅");
+};
+</script>
