@@ -73,6 +73,8 @@ addBtn.addEventListener("click", async () => {
   };
 
   await addData(type.value, newItem);
+
+  // مسح الحقول
   title.value = "";
   content.value = "";
   media.value = "";
@@ -95,28 +97,27 @@ function renderSection(sectionName, items) {
   }).join("");
 }
 
-// إعادة رسم كل الأقسام وربط الأحداث
+// إعادة رسم كل الأقسام
 function renderAll(data) {
   container.innerHTML = "";
   ["news","talents","achievements"].forEach(sec => {
     container.innerHTML += renderSection(sec, data[sec]);
   });
-
-  if(isAdmin) {
-    container.querySelectorAll(".delete-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const card = btn.closest(".card");
-        const id = card.dataset.id;
-        const section = card.dataset.type;
-        if(confirm("هل تريد الحذف؟")) {
-          await deleteData(section, id);
-        }
-      });
-    });
-  }
 }
 
-// مراقبة Firebase لكل قسم
+// **Event Delegation** لزر الحذف
+container.addEventListener("click", async (e) => {
+  if(e.target.classList.contains("delete-btn")) {
+    const card = e.target.closest(".card");
+    const id = card.dataset.id;
+    const section = card.dataset.type;
+    if(confirm("هل تريد الحذف؟")) {
+      await deleteData(section, id);
+    }
+  }
+});
+
+// مراقبة Firebase لكل قسم مباشرة (onSnapshot)
 ["news","talents","achievements"].forEach(section => {
   const col = collection(db, section);
   onSnapshot(col, snapshot => {
