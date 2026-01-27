@@ -1,48 +1,44 @@
-<script type="module">
-import { auth } from "./firebase.js";
-import { onAuthStateChanged } from
-"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>لوحة التحكم</title>
+</head>
+<body>
 
-onAuthStateChanged(auth, user => {
-  if (!user) {
-    location.href = "admin-login.html";
-  }
-});
-</script>
-<h2>لوحة التحكم</h2>
+<h2>لوحة تحكم الإدارة</h2>
 
-<input id="title" placeholder="العنوان">
-<textarea id="content" placeholder="المحتوى"></textarea>
-<input type="file" id="file">
+<input id="title" placeholder="العنوان"><br><br>
+<textarea id="content" placeholder="المحتوى"></textarea><br><br>
+
+<input id="media" placeholder="رابط الصورة أو الفيديو"><br><br>
+
 <select id="type">
-  <option value="news">أخبار</option>
-  <option value="talents">مواهب</option>
-  <option value="achievements">إنجازات</option>
-</select>
+  <option value="news">الأخبار</option>
+  <option value="talents">المواهب</option>
+  <option value="achievements">الإنجازات</option>
+</select><br><br>
+
 <button onclick="add()">إضافة</button>
 
+<p id="msg"></p>
+
 <script type="module">
-import { addData, storage } from "./firebase.js";
-import { ref, uploadBytes, getDownloadURL } 
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { addData } from "./firebase.js";
 
 window.add = async () => {
-  const file = document.getElementById("file").files[0];
-  let url = "";
-
-  if(file){
-    const r = ref(storage, Date.now()+file.name);
-    await uploadBytes(r, file);
-    url = await getDownloadURL(r);
-  }
+  const link = media.value.trim();
 
   await addData(type.value, {
     title: title.value,
     content: content.value,
-    image: file?.type.startsWith("image") ? url : "",
-    video: file?.type.startsWith("video") ? url : ""
+    image: link.match(/\.(jpg|png|jpeg)$/i) ? link : "",
+    video: link.includes("youtube") || link.endsWith(".mp4") ? link : ""
   });
 
-  alert("تمت الإضافة ✅");
+  msg.textContent = "تمت الإضافة ✅";
 };
 </script>
+
+</body>
+</html>
