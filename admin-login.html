@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>دخول الإدارة</title>
+</head>
+<body>
+
+<h2>تسجيل دخول الإدارة</h2>
+
+<input id="email" type="email" placeholder="البريد الإلكتروني">
+<input id="password" type="password" placeholder="كلمة المرور">
+<button onclick="login()">دخول</button>
+
+<p id="error" style="color:red;"></p>
+
+<script type="module">
+import { auth } from "./firebase.js";
+import { signInWithEmailAndPassword } from
+"https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+window.login = async () => {
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      email.value,
+      password.value
+    );
+    location.href = "admin-dashboard.html";
+  } catch (e) {
+    error.textContent = "بيانات الدخول غير صحيحة";
+  }
+};
+</script>
+
+</body>
+</html>
