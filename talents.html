@@ -50,33 +50,52 @@
 </footer>
 
 <script type="module">
-import { getCollectionData } from "./firebase.js";
+import { getCollectionData, deleteData, watchAdmin } from "./firebase.js";
 
 const container = document.getElementById("talentsContent");
 const talents = await getCollectionData("talents");
 
-talents.forEach(t => {
-  const card = document.createElement("div");
-  card.className = "card";
+let isAdmin = false;
 
-  let media = "";
-  if(t.image) media = `<img src="${t.image}">`;
-  else if(t.video) {
-  media = `
-    <iframe 
-      src="${t.video}" 
-      width="100%" 
-      height="350"
-      allow="autoplay"
-      allowfullscreen>
-    </iframe>`;
-}
-
-
-  card.innerHTML = `<h3>${t.title}</h3><p>${t.content}</p>${media}`;
-  container.appendChild(card);
+watchAdmin(status => {
+  isAdmin = status;
+  render();
 });
+
+function render() {
+  container.innerHTML = "";
+
+  talents.forEach(t => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    let media = "";
+    if(t.image) media = `<img src="${t.image}">`;
+    else if(t.video) {
+      media = `<iframe src="${t.video}" width="100%" height="300" allowfullscreen></iframe>`;
+    }
+
+    card.innerHTML = `
+      <h3>${t.title}</h3>
+      <p>${t.content}</p>
+      ${media}
+      ${isAdmin ? `<button class="delete-btn">🗑 حذف</button>` : ""}
+    `;
+
+    if(isAdmin) {
+      card.querySelector(".delete-btn").onclick = async () => {
+        if(confirm("هل تريد الحذف؟")) {
+          await deleteData("talents", t.id);
+          location.reload();
+        }
+      };
+    }
+
+    container.appendChild(card);
+  });
+}
 </script>
+
 
 </body>
 </html>
