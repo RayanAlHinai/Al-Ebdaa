@@ -1,16 +1,8 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<title>لوحة التحكم</title>
-</head>
 <body>
-
 <h2>لوحة تحكم الإدارة</h2>
 
 <input id="title" placeholder="العنوان"><br><br>
 <textarea id="content" placeholder="المحتوى"></textarea><br><br>
-
 <input id="media" placeholder="رابط الصورة أو الفيديو"><br><br>
 
 <select id="type">
@@ -20,6 +12,7 @@
 </select><br><br>
 
 <button onclick="add()">إضافة</button>
+<button onclick="goHome()">الرجوع للرئيسية</button>
 
 <p id="msg"></p>
 
@@ -37,8 +30,13 @@ window.add = async () => {
   });
 
   msg.textContent = "تمت الإضافة ✅";
+  // إعادة فراغ الحقول
+  title.value = "";
+  content.value = "";
+  media.value = "";
+};
+
+window.goHome = () => {
+  location.href = "index.html";
 };
 </script>
-
-</body>
-</html>
