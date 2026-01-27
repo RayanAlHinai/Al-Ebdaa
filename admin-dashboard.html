@@ -16,7 +16,7 @@ button { width:auto; cursor:pointer; }
 <body>
 
 <h1>لوحة الإدارة المتكاملة</h1>
-<button onclick="goHome()">الرجوع للرئيسية</button>
+<button id="homeBtn">الرجوع للرئيسية</button>
 
 <section>
   <h2>إضافة محتوى جديد</h2>
@@ -48,15 +48,20 @@ const type = document.getElementById("type");
 const msg = document.getElementById("msg");
 const addBtn = document.getElementById("addBtn");
 const container = document.getElementById("contentContainer");
+const homeBtn = document.getElementById("homeBtn");
 
 let isAdmin = false;
 
 // مراقبة حالة الأدمن
 watchAdmin(status => {
   isAdmin = status;
-  // إعادة عرض المحتوى إذا تغيرت صلاحية الأدمن
-  renderAll(currentData);
+  renderAll(currentData); // إعادة عرض المحتوى عند تغيير حالة الأدمن
 });
+
+// زر الرجوع للرئيسية
+homeBtn.onclick = () => {
+  location.href = "index.html";
+};
 
 // إضافة محتوى جديد
 addBtn.onclick = async () => {
@@ -79,15 +84,10 @@ addBtn.onclick = async () => {
   msg.textContent = `تمت الإضافة إلى ${type.value} ✅`;
 };
 
-// زر الرجوع
-function goHome() {
-  location.href = "index.html";
-}
-
-// تخزين كل البيانات الحالية من Firebase
+// تخزين البيانات الحالية
 let currentData = { news: [], talents: [], achievements: [] };
 
-// دالة رسم أي قسم
+// دالة رسم قسم معين
 function renderSection(sectionName, items) {
   if(items.length === 0) return `<h3>${sectionName}</h3><p>لا يوجد محتوى حتى الآن.</p>`;
 
@@ -112,7 +112,7 @@ function renderAll(data) {
   container.innerHTML += renderSection("talents", data.talents);
   container.innerHTML += renderSection("achievements", data.achievements);
 
-  // إضافة أحداث الحذف
+  // ربط أحداث الحذف بعد كل إعادة رسم
   if(isAdmin) {
     const deleteBtns = container.querySelectorAll(".delete-btn");
     deleteBtns.forEach(btn => {
