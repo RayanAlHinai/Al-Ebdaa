@@ -1,42 +1,71 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>لوحة التحكم</title>
+<style>
+body { font-family: Tahoma, sans-serif; padding:20px; }
+input, textarea, select, button { display:block; margin:10px 0; padding:8px; width:300px; }
+button { width:auto; cursor:pointer; }
+</style>
+</head>
 <body>
+
 <h2>لوحة تحكم الإدارة</h2>
 
-<input id="title" placeholder="العنوان"><br><br>
-<textarea id="content" placeholder="المحتوى"></textarea><br><br>
-<input id="media" placeholder="رابط الصورة أو الفيديو"><br><br>
-
+<input id="title" placeholder="العنوان">
+<textarea id="content" placeholder="المحتوى"></textarea>
+<input id="media" placeholder="رابط الصورة أو الفيديو">
 <select id="type">
   <option value="news">الأخبار</option>
   <option value="talents">المواهب</option>
   <option value="achievements">الإنجازات</option>
-</select><br><br>
+</select>
 
-<button onclick="add()">إضافة</button>
+<button id="addBtn">إضافة</button>
 <button onclick="goHome()">الرجوع للرئيسية</button>
 
-<p id="msg"></p>
+<p id="msg" style="color:green;"></p>
 
 <script type="module">
 import { addData } from "./firebase.js";
 
-window.add = async () => {
+const title = document.getElementById("title");
+const content = document.getElementById("content");
+const media = document.getElementById("media");
+const type = document.getElementById("type");
+const msg = document.getElementById("msg");
+const addBtn = document.getElementById("addBtn");
+
+// دالة الإضافة
+addBtn.onclick = async () => {
   const link = media.value.trim();
 
-  await addData(type.value, {
+  // إنشاء الكائن الجديد
+  const newItem = {
     title: title.value,
     content: content.value,
     image: link.match(/\.(jpg|png|jpeg)$/i) ? link : "",
-    video: link.includes("youtube") || link.endsWith(".mp4") ? link : ""
-  });
+    video: (link.includes("youtube") || link.endsWith(".mp4")) ? link : ""
+  };
 
-  msg.textContent = "تمت الإضافة ✅";
-  // إعادة فراغ الحقول
+  // إضافة إلى Firebase
+  await addData(type.value, newItem);
+
+  // مسح الحقول
   title.value = "";
   content.value = "";
   media.value = "";
+
+  msg.textContent = `تمت الإضافة إلى ${type.value} ✅`;
+
+  // لن تحتاج لإعادة تحميل، البيانات تظهر مباشرة في الصفحات الأخرى عبر onSnapshot
 };
 
-window.goHome = () => {
+// دالة الرجوع للرئيسية
+function goHome() {
   location.href = "index.html";
-};
+}
 </script>
+</body>
+</html>
