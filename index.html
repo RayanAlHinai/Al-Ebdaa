@@ -45,19 +45,26 @@ body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
 </footer>
 
 <script>
-// Example news data (you can add/remove here by code)
-const news = [
-  {
-    title: " مسابقة القرآن الكريم على مستوى المحافظة",
-    content: "المركز الثاني ع مستوى المحافظه في الحفظ والتلاوه ( مسابقة القرآن الكريم على مستوى المحافظة)",
-    image: "assets/E1.jpg"
-  },
-  {
-    title: " أسماك خزفية",
-    content: " ورشة أسماك زخفية من تقديم الاستاذ أحمد الشبيبي",
-    video: "assets/c084c296-d810-4b07-8a59-05a2c6d28482.mp4"
-  }
-];
+<script type="module">
+import { getCollectionData } from "./firebase.js";
+
+const container = document.getElementById("newsContainer");
+
+const news = await getCollectionData("news");
+
+news.forEach(item => {
+  const card = document.createElement("div");
+  card.className = "news-card";
+
+  let media = "";
+  if(item.image) media = `<img src="${item.image}">`;
+  else if(item.video) media = `<video controls src="${item.video}"></video>`;
+
+  card.innerHTML = `${media}<h3>${item.title}</h3><p>${item.content}</p>`;
+  container.appendChild(card);
+});
+</script>
+
 
 // Display news
 const newsContainer = document.getElementById("newsContainer");
