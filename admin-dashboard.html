@@ -2,33 +2,44 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>لوحة التحكم</title>
+<title>لوحة الإدارة المتكاملة</title>
 <style>
 body { font-family: Tahoma, sans-serif; padding:20px; }
+h2 { margin-top:40px; }
 input, textarea, select, button { display:block; margin:10px 0; padding:8px; width:300px; }
 button { width:auto; cursor:pointer; }
+.card { border:1px solid #ccc; padding:10px; border-radius:8px; margin:10px 0; }
+.card img, .card iframe { width:100%; max-height:300px; margin-top:5px; }
+.delete-btn { background:red; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:5px; margin-top:5px; }
 </style>
 </head>
 <body>
 
-<h2>لوحة تحكم الإدارة</h2>
-
-<input id="title" placeholder="العنوان">
-<textarea id="content" placeholder="المحتوى"></textarea>
-<input id="media" placeholder="رابط الصورة أو الفيديو">
-<select id="type">
-  <option value="news">الأخبار</option>
-  <option value="talents">المواهب</option>
-  <option value="achievements">الإنجازات</option>
-</select>
-
-<button id="addBtn">إضافة</button>
+<h1>لوحة الإدارة المتكاملة</h1>
 <button onclick="goHome()">الرجوع للرئيسية</button>
 
-<p id="msg" style="color:green;"></p>
+<section>
+  <h2>إضافة محتوى جديد</h2>
+  <input id="title" placeholder="العنوان">
+  <textarea id="content" placeholder="المحتوى"></textarea>
+  <input id="media" placeholder="رابط الصورة أو الفيديو">
+  <select id="type">
+    <option value="news">الأخبار</option>
+    <option value="talents">المواهب</option>
+    <option value="achievements">الإنجازات</option>
+  </select>
+  <button id="addBtn">إضافة</button>
+  <p id="msg" style="color:green;"></p>
+</section>
+
+<section>
+  <h2>إدارة المحتوى</h2>
+  <div id="contentContainer"></div>
+</section>
 
 <script type="module">
-import { addData } from "./firebase.js";
+import { db, addData, deleteData, watchAdmin } from "./firebase.js";
+import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const title = document.getElementById("title");
 const content = document.getElementById("content");
@@ -36,12 +47,21 @@ const media = document.getElementById("media");
 const type = document.getElementById("type");
 const msg = document.getElementById("msg");
 const addBtn = document.getElementById("addBtn");
+const container = document.getElementById("contentContainer");
 
-// دالة الإضافة
+let isAdmin = false;
+
+// مراقبة حالة الأدمن
+watchAdmin(status => {
+  isAdmin = status;
+  // إعادة عرض المحتوى إذا تغيرت صلاحية الأدمن
+  renderAll(currentData);
+});
+
+// إضافة محتوى جديد
 addBtn.onclick = async () => {
   const link = media.value.trim();
 
-  // إنشاء الكائن الجديد
   const newItem = {
     title: title.value,
     content: content.value,
@@ -49,7 +69,6 @@ addBtn.onclick = async () => {
     video: (link.includes("youtube") || link.endsWith(".mp4")) ? link : ""
   };
 
-  // إضافة إلى Firebase
   await addData(type.value, newItem);
 
   // مسح الحقول
@@ -58,14 +77,65 @@ addBtn.onclick = async () => {
   media.value = "";
 
   msg.textContent = `تمت الإضافة إلى ${type.value} ✅`;
-
-  // لن تحتاج لإعادة تحميل، البيانات تظهر مباشرة في الصفحات الأخرى عبر onSnapshot
 };
 
-// دالة الرجوع للرئيسية
+// زر الرجوع
 function goHome() {
   location.href = "index.html";
 }
+
+// تخزين كل البيانات الحالية من Firebase
+let currentData = { news: [], talents: [], achievements: [] };
+
+// دالة رسم أي قسم
+function renderSection(sectionName, items) {
+  if(items.length === 0) return `<h3>${sectionName}</h3><p>لا يوجد محتوى حتى الآن.</p>`;
+
+  return `<h3>${sectionName}</h3>` + items.map(item => {
+    let mediaHTML = "";
+    if(item.image) mediaHTML = `<img src="${item.image}">`;
+    else if(item.video) mediaHTML = `<iframe src="${item.video}" width="100%" height="200" allowfullscreen></iframe>`;
+
+    return `<div class="card">
+      <strong>${item.title}</strong>
+      <p>${item.content}</p>
+      ${mediaHTML}
+      ${isAdmin ? `<button class="delete-btn" data-type="${sectionName}" data-id="${item.id}">🗑 حذف</button>` : ""}
+    </div>`;
+  }).join("");
+}
+
+// إعادة رسم كل الأقسام
+function renderAll(data) {
+  container.innerHTML = "";
+  container.innerHTML += renderSection("news", data.news);
+  container.innerHTML += renderSection("talents", data.talents);
+  container.innerHTML += renderSection("achievements", data.achievements);
+
+  // إضافة أحداث الحذف
+  if(isAdmin) {
+    const deleteBtns = container.querySelectorAll(".delete-btn");
+    deleteBtns.forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.dataset.id;
+        const section = btn.dataset.type;
+        if(confirm("هل تريد الحذف؟")) {
+          await deleteData(section, id);
+        }
+      };
+    });
+  }
+}
+
+// مراقبة جميع الأقسام مباشرة
+["news","talents","achievements"].forEach(section => {
+  const col = collection(db, section);
+  onSnapshot(col, snapshot => {
+    currentData[section] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderAll(currentData);
+  });
+});
 </script>
+
 </body>
 </html>
