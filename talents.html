@@ -54,62 +54,24 @@
 </footer>
 
 <script>
-// Sample talents array - add/remove talents here by code
-const talents = [
+<script type="module">
+  import { getCollectionData } from "./firebase.js";
   
-  {
-    title: " حفظ نسب النبي",
-    content: " تتتنفخر بطالبتنا المتميزة التي أبدعت في حفظ نسب النبي محمد ﷺ كاملًا، بإتقان فهنيئًا لها هذا التميز، ونسأل الله أن يبارك فيها",
-    video:"e5a2fb02-77bb-4141-a399-a4e0c42107ae.mov "
-  },
+  const container = document.getElementById("talentsContent");
+  const talents = await getCollectionData("talents");
   
-  {
-    title: "  موهبة التشكيل بالورق ",
-    content: "الطالب علي الناصري",
-    video: "assets/T2.mp4"
-  },
-  {
-    title: "الخطابة",
-    content: "الطالب هارون السيابي",
-    video: "assets/f6d47255-50c8-4012-958c-d38a7ce6dd99.mov"
-  },
-  {
-    title: "عزف على البيانو",
-    content: "الطالبه تقدم عرضاً رائعاً على آلة البيانو في الحفل المدرسي.",
-    video: "assets/T3.mp4"
-  },
-  {
-    title: "  موهبة الرسم ",
-    content: "الطالبة زينب الناصري",
-    video: "assets/T5.mp4"
-  },
-  {
-    title: "رسم فني",
-    content: "الطالبة رشا أبدعت في لوحة فنية.",
-    image: "assets/talent1.jpg"
-  },
-  {
-    title: "موهبة المشي على الاقدام",
-    content: "الطالب تركي الغافري و الطالب علي الشقصي.",
-    video: "assets/T4.mp4"
-  },
+  talents.forEach(t => {
+    const card = document.createElement("div");
+    card.className = "card";
   
-  {
-    title: "رسم فني",
-    content: "الطالب يامن أبدعت في لوحة فنية.",
-    image: "assets/talent2.JPG"
-  },
-
-  {
-    title: "رسم فني",
-    content: "الطالبة زينب أبدعت في لوحة فنية.",
-    image: "assets/talent3.JPG"
-  }
+    let media = "";
+    if(t.image) media = `<img src="${t.image}">`;
+    else if(t.video) media = `<video controls src="${t.video}"></video>`;
   
-  
-  
-
-];
+    card.innerHTML = `<h3>${t.title}</h3><p>${t.content}</p>${media}`;
+    container.appendChild(card);
+  });
+</script>
 
 // Display talents
 const talentsContent = document.getElementById("talentsContent");
