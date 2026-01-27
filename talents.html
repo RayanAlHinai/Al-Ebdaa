@@ -61,7 +61,17 @@ talents.forEach(t => {
 
   let media = "";
   if(t.image) media = `<img src="${t.image}">`;
-  else if(t.video) media = `<video controls src="${t.video}"></video>`;
+  else if(t.video) {
+  media = `
+    <iframe 
+      src="${t.video}" 
+      width="100%" 
+      height="350"
+      allow="autoplay"
+      allowfullscreen>
+    </iframe>`;
+}
+
 
   card.innerHTML = `<h3>${t.title}</h3><p>${t.content}</p>${media}`;
   container.appendChild(card);
