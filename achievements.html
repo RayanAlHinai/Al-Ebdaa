@@ -36,25 +36,24 @@
   </footer>
 
   <script>
-    // Example achievements data (add/remove by code here)
-    const achievements = [
-      {
-      title: " مسابقة القرآن الكريم على مستوى المحافظة",
-      content: "المركز الثاني ع مستوى المحافظه في الحفظ والتلاوه ( مسابقة القرآن الكريم على مستوى المحافظة)",
-      image: "assets/E1.jpg"
-      },
-      {
-      title: " العزف والانشاد الجماعي",
-      content: "الاجادة في العزف والانشاد الجماعي على مستوى المحافظه ",
-      image: "assets/E2.JPG",
-      image: "assets/E3.JPG"
-      },
-      {
-      title: " مسابقة سفراء القراءة والحساب",
-      content: "المركز الأول مسابقة سفراء القراءة والحساب",
-      image: "assets/E4.JPG"
-      }
-    ];
+    <script type="module">
+      import { getCollectionData } from "./firebase.js";
+      
+      const container = document.getElementById("achievementsContent");
+      const achievements = await getCollectionData("achievements");
+      
+      achievements.forEach(a => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <strong>${a.title}</strong>
+          <p>${a.content}</p>
+          ${a.image ? `<img src="${a.image}">` : ""}
+        `;
+        container.appendChild(div);
+      });
+  </script>
+
 
     // Display achievements
     const achievementsContent = document.getElementById("achievementsContent");
@@ -66,15 +65,7 @@
       achievementsContent.appendChild(div);
     });
   </script>
-  <script type="module">
-    import { saveUser } from "./firebase.js";
-    async function submitForm() {
-      await saveUserForm("Ali", 22);
-      alert("تم الحفظ");
-    }
-
-    window.submitForm = submitForm;
-  </script>
+ 
   
 </body>
 </html>
