@@ -50,24 +50,27 @@
 </footer>
 
 <script type="module">
-import { getCollectionData, deleteData, watchAdmin } from "./firebase.js";
+import { getCollectionData, deleteData, watchAdmin, db } from "./firebase.js";
+import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const container = document.getElementById("talentsContent");
-let talents = [];
 let isAdmin = false;
 
+// مراقبة حالة الأدمن
 watchAdmin(status => {
   isAdmin = status;
-  render();
+  // إعادة رسم المواهب بعد تغيير حالة الأدمن
+  // لا داعي لجلب البيانات مرة أخرى لأن onSnapshot متصل
 });
 
-async function fetchTalents() {
-  talents = await getCollectionData("talents");
-  render();
-}
-
-function render() {
+// دالة رسم المواهب
+function renderTalents(talents) {
   container.innerHTML = "";
+
+  if(talents.length === 0) {
+    container.innerHTML = "<p>لا توجد مواهب حتى الآن.</p>";
+    return;
+  }
 
   talents.forEach(t => {
     const card = document.createElement("div");
@@ -84,11 +87,11 @@ function render() {
       ${isAdmin ? `<button class="delete-btn">🗑 حذف</button>` : ""}
     `;
 
-    if(isAdmin) {
+    if(isAdmin && card.querySelector(".delete-btn")) {
       card.querySelector(".delete-btn").onclick = async () => {
         if(confirm("هل تريد الحذف؟")) {
           await deleteData("talents", t.id);
-          await fetchTalents(); // إعادة تحميل بعد الحذف مباشرة
+          // لا داعي لإعادة fetchTalents، التغييرات تظهر مباشرة عبر onSnapshot
         }
       };
     }
@@ -97,7 +100,12 @@ function render() {
   });
 }
 
-fetchTalents();
+// مراقبة مجموعة "talents" بشكل مباشر
+const talentsCol = collection(db, "talents");
+onSnapshot(talentsCol, snapshot => {
+  const talentsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  renderTalents(talentsData);
+});
 </script>
 
 
