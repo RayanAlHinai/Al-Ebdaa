@@ -51,22 +51,20 @@ const container = document.getElementById("contentContainer");
 const homeBtn = document.getElementById("homeBtn");
 
 let isAdmin = false;
+let currentData = { news: [], talents: [], achievements: [] };
 
 // مراقبة حالة الأدمن
 watchAdmin(status => {
   isAdmin = status;
-  renderAll(currentData); // إعادة عرض المحتوى عند تغيير حالة الأدمن
+  renderAll(currentData);
 });
 
-// زر الرجوع للرئيسية
-homeBtn.onclick = () => {
-  location.href = "index.html";
-};
+// زر الرجوع
+homeBtn.addEventListener("click", () => location.href="index.html");
 
-// إضافة محتوى جديد
-addBtn.onclick = async () => {
+// زر الإضافة
+addBtn.addEventListener("click", async () => {
   const link = media.value.trim();
-
   const newItem = {
     title: title.value,
     content: content.value,
@@ -75,59 +73,50 @@ addBtn.onclick = async () => {
   };
 
   await addData(type.value, newItem);
-
-  // مسح الحقول
   title.value = "";
   content.value = "";
   media.value = "";
-
   msg.textContent = `تمت الإضافة إلى ${type.value} ✅`;
-};
+});
 
-// تخزين البيانات الحالية
-let currentData = { news: [], talents: [], achievements: [] };
-
-// دالة رسم قسم معين
+// دالة لرسم قسم معين
 function renderSection(sectionName, items) {
   if(items.length === 0) return `<h3>${sectionName}</h3><p>لا يوجد محتوى حتى الآن.</p>`;
-
   return `<h3>${sectionName}</h3>` + items.map(item => {
     let mediaHTML = "";
     if(item.image) mediaHTML = `<img src="${item.image}">`;
     else if(item.video) mediaHTML = `<iframe src="${item.video}" width="100%" height="200" allowfullscreen></iframe>`;
-
-    return `<div class="card">
+    return `<div class="card" data-id="${item.id}" data-type="${sectionName}">
       <strong>${item.title}</strong>
       <p>${item.content}</p>
       ${mediaHTML}
-      ${isAdmin ? `<button class="delete-btn" data-type="${sectionName}" data-id="${item.id}">🗑 حذف</button>` : ""}
+      ${isAdmin ? `<button class="delete-btn">🗑 حذف</button>` : ""}
     </div>`;
   }).join("");
 }
 
-// إعادة رسم كل الأقسام
+// إعادة رسم كل الأقسام وربط الأحداث
 function renderAll(data) {
   container.innerHTML = "";
-  container.innerHTML += renderSection("news", data.news);
-  container.innerHTML += renderSection("talents", data.talents);
-  container.innerHTML += renderSection("achievements", data.achievements);
+  ["news","talents","achievements"].forEach(sec => {
+    container.innerHTML += renderSection(sec, data[sec]);
+  });
 
-  // ربط أحداث الحذف بعد كل إعادة رسم
   if(isAdmin) {
-    const deleteBtns = container.querySelectorAll(".delete-btn");
-    deleteBtns.forEach(btn => {
-      btn.onclick = async () => {
-        const id = btn.dataset.id;
-        const section = btn.dataset.type;
+    container.querySelectorAll(".delete-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const card = btn.closest(".card");
+        const id = card.dataset.id;
+        const section = card.dataset.type;
         if(confirm("هل تريد الحذف؟")) {
           await deleteData(section, id);
         }
-      };
+      });
     });
   }
 }
 
-// مراقبة جميع الأقسام مباشرة
+// مراقبة Firebase لكل قسم
 ["news","talents","achievements"].forEach(section => {
   const col = collection(db, section);
   onSnapshot(col, snapshot => {
