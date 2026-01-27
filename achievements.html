@@ -50,7 +50,17 @@ achievements.forEach(a => {
 
   let media = "";
   if(a.image) media = `<img src="${a.image}">`;
-  else if(a.video) media = `<video controls src="${a.video}"></video>`;
+  else if(t.video) {
+  media = `
+    <iframe 
+      src="${t.video}" 
+      width="100%" 
+      height="350"
+      allow="autoplay"
+      allowfullscreen>
+    </iframe>`;
+}
+
 
   div.innerHTML = `<strong>${a.title}</strong><p>${a.content}</p>${media}`;
   container.appendChild(div);
