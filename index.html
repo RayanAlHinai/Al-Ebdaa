@@ -5,17 +5,17 @@
 <title>بوابة الإبداع</title>
 <link rel="stylesheet" href="style.css">
 <style>
-body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
-.news-slider { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-.news-card { border:1px solid #ccc; padding:10px; border-radius:5px; width:200px; }
-.news-card img { width:100%; height:auto; margin-bottom:5px; }
+.news-slider { display:flex; flex-wrap:wrap; gap:15px; }
+.news-card { width:220px; border:1px solid #ccc; padding:10px; border-radius:8px; }
+.news-card img, .news-card video { width:100%; margin-bottom:8px; }
 </style>
 </head>
+
 <body>
 
 <header>
-  <img src="assets/logo2.png" alt="Left Logo" class="logo-left">
-  <img src="assets/logo1.png" alt="Right Logo" class="logo-right">
+  <img src="assets/logo2.png" class="logo-left">
+  <img src="assets/logo1.png" class="logo-right">
   <h1>بوابة الإبداع</h1>
   <p>منصة المدرسة لعرض المواهب والإنجازات</p>
 </header>
@@ -24,67 +24,36 @@ body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
   <a href="talents.html">المواهب</a>
   <a href="parents.html">همسات لولي الأمر</a>
   <a href="rules.html">قوانين اللائحة</a>
-  <a href="achievements.html">إنجازات المدرسة</a>
+  <a href="library.html">المكتبة الإلكترونية</a>
+  <a href="achievements.html">الإنجازات</a>
   <a href="admin-login.html" class="admin-btn">تسجيل دخول</a>
-
 </nav>
 
-<section class="main-bg">
-  <div class="overlay">
-    <div class="intro">
-      <h2>أهلاً بكم في بوابة الإبداع</h2>
-    </div>
-
-    <h2>📰 الأخبار</h2>
-    
-    <div class="news-slider" id="newsContainer"></div>
-  </div>
+<section>
+  <h2>📰 الأخبار</h2>
+  <div id="newsContainer" class="news-slider"></div>
 </section>
 
 <footer>
-<p>© 2025 بوابة الإبداع - جميع الحقوق محفوظة</p>
+<p>© 2025 بوابة الإبداع</p>
 </footer>
 
-<script>
 <script type="module">
 import { getCollectionData } from "./firebase.js";
 
 const container = document.getElementById("newsContainer");
-
 const news = await getCollectionData("news");
 
-news.forEach(item => {
+news.forEach(n => {
   const card = document.createElement("div");
   card.className = "news-card";
 
   let media = "";
-  if(item.image) media = `<img src="${item.image}">`;
-  else if(item.video) media = `<video controls src="${item.video}"></video>`;
+  if(n.image) media = `<img src="${n.image}">`;
+  else if(n.video) media = `<video controls src="${n.video}"></video>`;
 
-  card.innerHTML = `${media}<h3>${item.title}</h3><p>${item.content}</p>`;
+  card.innerHTML = `${media}<h3>${n.title}</h3><p>${n.content}</p>`;
   container.appendChild(card);
-});
-</script>
-
-
-// Display news
-const newsContainer = document.getElementById("newsContainer");
-news.forEach(item => {
-  const card = document.createElement("div");
-  card.className = "news-card";
-
-  let media = "";
-  if(item.image) {
-    media = `<img src="${item.image}" alt="صورة الخبر">`;
-  } else if(item.video) {
-    media = `<video controls width="100%">
-      <source src="${item.video}" type="video/mp4">
-متصفحك لا يدعم تشغيل الفيديو
-      </video>`;
-  }
-
-  card.innerHTML = `${media}<h3>${item.title}</h3><p>${item.content}</p>`;
-  newsContainer.appendChild(card);
 });
 </script>
 
