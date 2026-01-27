@@ -1,71 +1,61 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>إنجازات المدرسة</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
-    #achievementsContent { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-    .card { padding:10px; border:1px solid #ccc; border-radius:5px; width:200px; }
-    .card img { width:100%; height:auto; margin-top:5px; }
-  </style>
+<meta charset="UTF-8">
+<title>إنجازات المدرسة</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body { font-family: Tahoma, sans-serif; margin:0; }
+#achievementsContent { display:flex; flex-wrap:wrap; gap:15px; }
+.card { width:220px; border:1px solid #ccc; padding:10px; border-radius:8px; }
+.card img, .card video { width:100%; margin-top:8px; border-radius:6px; }
+</style>
 </head>
+
 <body>
-  <header>
-    <img src="assets/logo2.png" alt="Left Logo" class="logo-left">
-    <img src="assets/logo1.png" alt="Right Logo" class="logo-right">
-    <h1>🏆 إنجازات المدرسة</h1>
-  </header>
 
-  <nav>
-    <a href="index.html">الرئيسية</a>
-    <a href="talents.html">المواهب</a>
-    <a href="parents.html">همسات لولي الأمر</a>
-    <a href="rules.html">قوانين اللائحة</a>
-    <a href="library.html">المكتبة الإلكترونية</a>
-  </nav>
+<header>
+  <img src="assets/logo2.png" class="logo-left">
+  <img src="assets/logo1.png" class="logo-right">
+  <h1>🏆 إنجازات المدرسة</h1>
+</header>
 
-  <section>
-    <h2>نجاحاتنا</h2>
-    <div id="achievementsContent"></div>
-  </section>
+<nav>
+  <a href="index.html">الرئيسية</a>
+  <a href="talents.html">المواهب</a>
+  <a href="parents.html">همسات لولي الأمر</a>
+  <a href="rules.html">قوانين اللائحة</a>
+  <a href="library.html">المكتبة الإلكترونية</a>
+  <a href="admin-login.html" class="admin-btn">تسجيل دخول</a>
+</nav>
 
-  <footer>
-    <p>© 2025 بوابة الإبداع</p>
-  </footer>
+<section>
+  <h2>نجاحاتنا</h2>
+  <div id="achievementsContent"></div>
+</section>
 
-  <script>
-    <script type="module">
-      import { getCollectionData } from "./firebase.js";
-      
-      const container = document.getElementById("achievementsContent");
-      const achievements = await getCollectionData("achievements");
-      
-      achievements.forEach(a => {
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `
-          <strong>${a.title}</strong>
-          <p>${a.content}</p>
-          ${a.image ? `<img src="${a.image}">` : ""}
-        `;
-        container.appendChild(div);
-      });
-  </script>
+<footer>
+  <p>© 2025 بوابة الإبداع</p>
+</footer>
 
+<script type="module">
+import { getCollectionData } from "./firebase.js";
 
-    // Display achievements
-    const achievementsContent = document.getElementById("achievementsContent");
-    achievements.forEach(ach => {
-      const div = document.createElement("div");
-      div.className = "card";
-      const imgTag = ach.image ? `<img src="${ach.image}" alt="صورة الإنجاز">` : "";
-      div.innerHTML = `<strong>${ach.title}</strong><p>${ach.content}</p>${imgTag}`;
-      achievementsContent.appendChild(div);
-    });
-  </script>
- 
-  
+const container = document.getElementById("achievementsContent");
+const achievements = await getCollectionData("achievements");
+
+achievements.forEach(a => {
+  const div = document.createElement("div");
+  div.className = "card";
+
+  let media = "";
+  if(a.image) media = `<img src="${a.image}">`;
+  else if(a.video) media = `<video controls src="${a.video}"></video>`;
+
+  div.innerHTML = `<strong>${a.title}</strong><p>${a.content}</p>${media}`;
+  container.appendChild(div);
+});
+</script>
+
 </body>
 </html>
