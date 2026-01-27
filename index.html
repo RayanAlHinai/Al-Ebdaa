@@ -42,30 +42,36 @@
 import { getCollectionData } from "./firebase.js";
 
 const container = document.getElementById("newsContainer");
-const news = await getCollectionData("news");
 
-news.forEach(n => {
-  const card = document.createElement("div");
-  card.className = "news-card";
+async function renderNews() {
+  container.innerHTML = "";
+  const news = await getCollectionData("news");
 
-  let media = "";
-  if(n.image) media = `<img src="${n.image}">`;
-  else if(t.video) {
-  media = `
-    <iframe 
-      src="${t.video}" 
-      width="100%" 
-      height="350"
-      allow="autoplay"
-      allowfullscreen>
-    </iframe>`;
+  news.forEach(n => {
+    const card = document.createElement("div");
+    card.className = "news-card";
+
+    let media = "";
+    if(n.image) media = `<img src="${n.image}">`;
+    else if(n.video) {
+      media = `
+        <iframe 
+          src="${n.video}" 
+          width="100%" 
+          height="350"
+          allow="autoplay"
+          allowfullscreen>
+        </iframe>`;
+    }
+
+    card.innerHTML = `${media}<h3>${n.title}</h3><p>${n.content}</p>`;
+    container.appendChild(card);
+  });
 }
 
-
-  card.innerHTML = `${media}<h3>${n.title}</h3><p>${n.content}</p>`;
-  container.appendChild(card);
-});
+renderNews();
 </script>
+
 
 </body>
 </html>
