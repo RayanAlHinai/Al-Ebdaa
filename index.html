@@ -10,7 +10,6 @@
 .news-card img, .news-card video { width:100%; margin-bottom:8px; }
 </style>
 </head>
-
 <body>
 
 <header>
@@ -39,13 +38,24 @@
 </footer>
 
 <script type="module">
-import { getCollectionData } from "./firebase.js";
+import { db, watchAdmin, deleteData } from "./firebase.js";
+import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const container = document.getElementById("newsContainer");
+let isAdmin = false;
 
-async function renderNews() {
+// مراقبة حالة الأدمن
+watchAdmin(status => {
+  isAdmin = status;
+});
+
+// رسم الأخبار
+function renderNews(news) {
   container.innerHTML = "";
-  const news = await getCollectionData("news");
+  if(news.length === 0) {
+    container.innerHTML = "<p>لا توجد أخبار حتى الآن.</p>";
+    return;
+  }
 
   news.forEach(n => {
     const card = document.createElement("div");
@@ -53,25 +63,33 @@ async function renderNews() {
 
     let media = "";
     if(n.image) media = `<img src="${n.image}">`;
-    else if(n.video) {
-      media = `
-        <iframe 
-          src="${n.video}" 
-          width="100%" 
-          height="350"
-          allow="autoplay"
-          allowfullscreen>
-        </iframe>`;
+    else if(n.video) media = `<iframe src="${n.video}" width="100%" height="300" allowfullscreen></iframe>`;
+
+    card.innerHTML = `
+      <h3>${n.title}</h3>
+      <p>${n.content}</p>
+      ${media}
+      ${isAdmin ? `<button class="delete-btn">🗑 حذف</button>` : ""}
+    `;
+
+    if(isAdmin && card.querySelector(".delete-btn")) {
+      card.querySelector(".delete-btn").onclick = async () => {
+        if(confirm("هل تريد الحذف؟")) {
+          await deleteData("news", n.id);
+        }
+      };
     }
 
-    card.innerHTML = `${media}<h3>${n.title}</h3><p>${n.content}</p>`;
     container.appendChild(card);
   });
 }
 
-renderNews();
+// مراقبة الأخبار مباشرة
+const newsCol = collection(db, "news");
+onSnapshot(newsCol, snapshot => {
+  const newsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  renderNews(newsData);
+});
 </script>
-
-
 </body>
 </html>
