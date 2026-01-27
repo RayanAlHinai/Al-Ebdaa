@@ -5,34 +5,29 @@
 <title>المواهب</title>
 <link rel="stylesheet" href="style.css">
 <style>
-  .card {
-    border: 2px solid #ccc;
-    padding: 20px;
-    margin:15px;
-    border-radius:15px;
-    display:inline-block;
-    width: 500px;
-    height: auto;
-    text-align: center;
-    font-size: 20px;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-    vertical-align: top;
-    position: relative;
-  }
-
-  .card img, .card video {
-    width: 100%;
-    max-height: 400px;
-    margin-top: 15px;
-    border-radius: 15px;
-  }
+.card {
+  width:500px;
+  border:2px solid #ccc;
+  padding:20px;
+  margin:15px;
+  border-radius:15px;
+  display:inline-block;
+  vertical-align:top;
+}
+.card img, .card video {
+  width:100%;
+  max-height:400px;
+  margin-top:10px;
+  border-radius:10px;
+}
 </style>
 </head>
+
 <body>
 
 <header>
-  <img src="assets/logo2.png" alt="Left Logo" class="logo-left">
-  <img src="assets/logo1.png" alt="Right Logo" class="logo-right">
+  <img src="assets/logo2.png" class="logo-left">
+  <img src="assets/logo1.png" class="logo-right">
   <h1>🌟 المواهب</h1>
 </header>
 
@@ -41,55 +36,35 @@
   <a href="parents.html">همسات لولي الأمر</a>
   <a href="rules.html">قوانين اللائحة</a>
   <a href="library.html">المكتبة الإلكترونية</a>
-  <a href="achievements.html">إنجازات المدرسة</a>
+  <a href="achievements.html">الإنجازات</a>
+  <a href="admin-login.html" class="admin-btn">تسجيل دخول</a>
 </nav>
 
 <section>
   <h2>عرض مواهب الطلبة</h2>
-  <div class="grid" id="talentsContent"></div>
+  <div id="talentsContent"></div>
 </section>
 
 <footer>
-  <p>© 2025 بوابة الإبداع</p>
+<p>© 2025 بوابة الإبداع</p>
 </footer>
 
-<script>
 <script type="module">
-  import { getCollectionData } from "./firebase.js";
-  
-  const container = document.getElementById("talentsContent");
-  const talents = await getCollectionData("talents");
-  
-  talents.forEach(t => {
-    const card = document.createElement("div");
-    card.className = "card";
-  
-    let media = "";
-    if(t.image) media = `<img src="${t.image}">`;
-    else if(t.video) media = `<video controls src="${t.video}"></video>`;
-  
-    card.innerHTML = `<h3>${t.title}</h3><p>${t.content}</p>${media}`;
-    container.appendChild(card);
-  });
-</script>
+import { getCollectionData } from "./firebase.js";
 
-// Display talents
-const talentsContent = document.getElementById("talentsContent");
-talents.forEach(talent => {
+const container = document.getElementById("talentsContent");
+const talents = await getCollectionData("talents");
+
+talents.forEach(t => {
   const card = document.createElement("div");
   card.className = "card";
 
-  // Show image if available, else show video
   let media = "";
-  if(talent.image) media = `<img src="${talent.image}" alt="${talent.title}">`;
-  else if(talent.video) media = `<video controls src="${talent.video}"></video>`;
+  if(t.image) media = `<img src="${t.image}">`;
+  else if(t.video) media = `<video controls src="${t.video}"></video>`;
 
-  card.innerHTML = `
-    <h3>${talent.title}</h3>
-    <p>${talent.content}</p>
-    ${media}
-  `;
-  talentsContent.appendChild(card);
+  card.innerHTML = `<h3>${t.title}</h3><p>${t.content}</p>${media}`;
+  container.appendChild(card);
 });
 </script>
 
