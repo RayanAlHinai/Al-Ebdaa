@@ -41,30 +41,28 @@
 
 <script type="module">
 import { db } from "./firebase.js";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  increment
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const counterRef = doc(db, "stats", "visitors");
 const countEl = document.getElementById("visitorCount");
 
-async function updateAndLoad() {
-  if(!localStorage.getItem("visited")){
+async function updateAndShowCounter() {
+  // إذا الزائر جديد على هذا المتصفح
+  if(!localStorage.getItem("visited")) {
     await updateDoc(counterRef, { count: increment(1) });
-    localStorage.setItem("visited","yes");
+    localStorage.setItem("visited", "yes");
   }
 
+  // جلب العدد الحالي
   const snap = await getDoc(counterRef);
-  if(snap.exists()){
+  if(snap.exists()) {
     countEl.textContent = snap.data().count;
+  } else {
+    countEl.textContent = 0;
   }
 }
 
-updateAndLoad();
-
+updateAndShowCounter();
 
 
 import { db, watchAdmin, deleteData } from "./firebase.js";
