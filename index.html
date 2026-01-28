@@ -51,29 +51,20 @@ import {
 const counterRef = doc(db, "stats", "visitors");
 const countEl = document.getElementById("visitorCount");
 
-if(!localStorage.getItem("visited")){
-  increaseCounter();
-  localStorage.setItem("visited","yes");
-}
-loadCounter();
+async function updateAndLoad() {
+  if(!localStorage.getItem("visited")){
+    await updateDoc(counterRef, { count: increment(1) });
+    localStorage.setItem("visited","yes");
+  }
 
-// زيادة العداد
-async function increaseCounter(){
-  await updateDoc(counterRef, {
-    count: increment(1)
-  });
-}
-
-// قراءة العدد
-async function loadCounter(){
   const snap = await getDoc(counterRef);
   if(snap.exists()){
     countEl.textContent = snap.data().count;
   }
 }
 
-increaseCounter();
-loadCounter();
+updateAndLoad();
+
 
 
 import { db, watchAdmin, deleteData } from "./firebase.js";
