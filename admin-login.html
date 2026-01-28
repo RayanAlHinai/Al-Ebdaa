@@ -6,29 +6,25 @@
 </head>
 <body>
 
-<h2>تسجيل دخول الإدارة</h2>
+<h2>تسجيل دخول الأدمن</h2>
 
-<input id="email" type="email" placeholder="البريد الإلكتروني">
+<input id="email" placeholder="البريد">
 <input id="password" type="password" placeholder="كلمة المرور">
-<button onclick="login()">دخول</button>
+<button id="loginBtn">دخول</button>
 
-<p id="error" style="color:red;"></p>
+<p id="msg" style="color:red"></p>
 
 <script type="module">
 import { auth } from "./firebase.js";
 import { signInWithEmailAndPassword } from
 "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-window.login = async () => {
+loginBtn.onclick = async () => {
   try {
-    await signInWithEmailAndPassword(
-      auth,
-      email.value,
-      password.value
-    );
+    await signInWithEmailAndPassword(auth, email.value, password.value);
     location.href = "admin-dashboard.html";
-  } catch (e) {
-    error.textContent = "بيانات الدخول غير صحيحة";
+  } catch {
+    msg.textContent = "بيانات الدخول غير صحيحة";
   }
 };
 </script>
