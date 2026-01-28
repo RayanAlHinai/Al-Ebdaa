@@ -2,13 +2,23 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>لوحة التحكم</title>
+<title>لوحة الإدارة</title>
 
 <style>
 body{
   font-family:Tahoma;
   padding:20px;
   background:#f4f4f4;
+}
+
+input,textarea,select,button{
+  width:100%;
+  margin:6px 0;
+  padding:8px;
+}
+
+button{
+  cursor:pointer;
 }
 
 .card{
@@ -19,39 +29,31 @@ body{
   border-radius:8px;
 }
 
-iframe,img{
+img,iframe{
   width:100%;
   max-height:300px;
   margin-top:8px;
   border-radius:6px;
 }
 
-button{
-  margin-top:5px;
-  padding:6px 12px;
-  cursor:pointer;
-}
-
-select,input,textarea{
-  width:100%;
-  margin:5px 0;
-  padding:8px;
-}
-
-h3{margin-top:30px}
-
 .delete{
   background:#e53935;
   color:#fff;
   border:none;
   border-radius:5px;
+  padding:6px;
+  margin-top:6px;
+}
+
+h3{
+  margin-top:30px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>لوحة الإدارة</h1>
+<h1>لوحة الإدارة المتكاملة</h1>
 <button onclick="location.href='index.html'">العودة للرئيسية</button>
 
 <hr>
@@ -63,13 +65,16 @@ h3{margin-top:30px}
 <input id="media" placeholder="رابط صورة أو فيديو (Drive / YouTube)">
 
 <select id="type">
+  <option value="news">الأخبار</option>
+  <option value="talents">المواهب</option>
+  <option value="achievements">الإنجازات</option>
   <option value="events">الفعاليات</option>
   <option value="parents">همسات ولي الأمر</option>
   <option value="rules">القوانين</option>
 </select>
 
 <button id="addBtn">إضافة</button>
-<p id="msg"></p>
+<p id="msg" style="color:green"></p>
 
 <hr>
 
@@ -94,7 +99,7 @@ watchAdmin(isAdmin=>{
   if(!isAdmin) location.href="admin-login.html";
 });
 
-/* ➕ إضافة */
+/* ➕ إضافة محتوى */
 addBtn.onclick = async () => {
   const link = media.value.trim();
   const video = normalizeVideoLink(link);
@@ -106,39 +111,52 @@ addBtn.onclick = async () => {
     video: video.includes("preview") || video.includes("embed") ? video : ""
   });
 
-  title.value = "";
-  content.value = "";
-  media.value = "";
-  msg.textContent = "تمت الإضافة ✅";
+  title.value="";
+  content.value="";
+  media.value="";
+  msg.textContent="تمت الإضافة بنجاح ✅";
 };
 
-/* 📡 مراقبة البيانات */
-["events","parents","rules"].forEach(col=>{
+/* 🖥️ عرض المحتوى */
+const sections = [
+  "news",
+  "talents",
+  "achievements",
+  "events",
+  "parents",
+  "rules"
+];
+
+sections.forEach(col=>{
   onSnapshot(collection(db,col), snap=>{
     render(col, snap.docs.map(d=>({id:d.id,...d.data()})));
   });
 });
 
-/* 🖥️ عرض */
 function render(col, items){
-  const sectionId = `sec-${col}`;
-  let section = document.getElementById(sectionId);
+  const secId = "sec-"+col;
+  let sec = document.getElementById(secId);
 
-  if(!section){
-    section = document.createElement("div");
-    section.id = sectionId;
-    container.appendChild(section);
+  if(!sec){
+    sec = document.createElement("div");
+    sec.id = secId;
+    container.appendChild(sec);
   }
 
-  section.innerHTML = `<h3>${getTitle(col)}</h3>`;
+  sec.innerHTML = `<h3>${getTitle(col)}</h3>`;
+
+  if(items.length===0){
+    sec.innerHTML += `<p>لا يوجد محتوى</p>`;
+    return;
+  }
 
   items.forEach(i=>{
-    section.innerHTML += `
+    sec.innerHTML += `
       <div class="card">
-        <strong>${i.title || ""}</strong>
-        <p>${i.content || ""}</p>
-        ${i.image ? `<img src="${i.image}">` : ""}
-        ${i.video ? `<iframe src="${i.video}" allowfullscreen></iframe>` : ""}
+        <strong>${i.title||""}</strong>
+        <p>${i.content||""}</p>
+        ${i.image?`<img src="${i.image}">`:""}
+        ${i.video?`<iframe src="${i.video}" allowfullscreen></iframe>`:""}
         <button class="delete" onclick="del('${col}','${i.id}')">🗑 حذف</button>
       </div>
     `;
@@ -152,11 +170,16 @@ window.del = async (c,id)=>{
   }
 };
 
-/* 🏷️ عناوين */
-function getTitle(col){
-  if(col==="events") return "📅 الفعاليات";
-  if(col==="parents") return "👨‍👩‍👧 همسات ولي الأمر";
-  if(col==="rules") return "📜 القوانين";
+/* 🏷️ أسماء الأقسام */
+function getTitle(c){
+  return {
+    news:"📰 الأخبار",
+    talents:"🌟 المواهب",
+    achievements:"🏆 الإنجازات",
+    events:"📅 الفعاليات",
+    parents:"👨‍👩‍👧 همسات ولي الأمر",
+    rules:"📜 القوانين"
+  }[c];
 }
 </script>
 
