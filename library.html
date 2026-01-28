@@ -3,18 +3,69 @@
 <head>
 <meta charset="UTF-8">
 <title>الفعاليات</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <link rel="stylesheet" href="style.css">
+
 <style>
-  body { font-family: Tahoma, sans-serif; margin:0; padding:0; }
-  .book-item { margin-bottom:10px; }
+  body { font-family: Tahoma, sans-serif; margin:0; padding:0; background:#f4f4f4; }
+
+  .container { padding:20px; }
+
+  .events-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    gap:20px;
+  }
+
+  .event-card {
+    background:#fff;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:0 2px 6px rgba(0,0,0,.1);
+  }
+
+  img, iframe {
+    width:100%;
+    border-radius:8px;
+    margin-top:10px;
+  }
+
+  button {
+    margin-top:10px;
+    padding:6px 12px;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+  }
+
+  .delete-btn {
+    background:#e53935;
+    color:#fff;
+  }
+
+  .admin-box {
+    background:#fff;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:20px;
+    display:none;
+  }
+
+  input, textarea {
+    width:100%;
+    margin-bottom:10px;
+    padding:8px;
+  }
 </style>
 </head>
+
 <body>
 
 <header>
-  <img src="assets/logo2.png" alt="Left Logo" class="logo-left">
-  <img src="assets/logo1.png" alt="Right Logo" class="logo-right">
-  <h1> الفعاليات</h1>
+  <img src="assets/logo2.png" class="logo-left">
+  <img src="assets/logo1.png" class="logo-right">
+  <h1>الفعاليات</h1>
 </header>
 
 <nav>
@@ -25,29 +76,108 @@
   <a href="achievements.html">إنجازات المدرسة</a>
 </nav>
 
-<section>
-  <h2>الكتب المتاحة</h2>
-  <ul id="libraryContent"></ul>
-</section>
+<div class="container">
+
+  <!-- 🔐 Admin Add Event -->
+  <div class="admin-box" id="adminBox">
+    <h3>إضافة فعالية</h3>
+    <input id="title" placeholder="عنوان الفعالية">
+    <textarea id="description" placeholder="وصف الفعالية"></textarea>
+    <input id="media" placeholder="رابط صورة أو فيديو (Drive / YouTube)">
+    <button onclick="addEvent()">إضافة</button>
+  </div>
+
+  <!-- 📅 Events -->
+  <div class="events-grid" id="events"></div>
+
+</div>
 
 <footer>
   <p>© 2025 اكاديمية الإبداع</p>
 </footer>
 
-<script>
-// Sample books (add/remove here by code)
-const books = [
-  { name: "الرياضيات للصف الثاني", url: "assets/كتاب-الرياضيات-كتاب-التلميذ-الصف-الثاني-الفصل-الأول.pdf" }
-];
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc }
+    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// Render books
-const libraryContent = document.getElementById("libraryContent");
-books.forEach(book => {
-  const li = document.createElement("li");
-  li.className = "book-item";
-  li.innerHTML = `<a href="${book.url}" target="_blank">${book.name}</a>`;
-  libraryContent.appendChild(li);
-});
+  // 🔥 Firebase config
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    appId: "XXXX"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  const eventsBox = document.getElementById("events");
+  const adminBox = document.getElementById("adminBox");
+
+  let isAdmin = false;
+
+  // 🔐 Check admin
+  onAuthStateChanged(auth, user => {
+    isAdmin = !!user;
+    adminBox.style.display = isAdmin ? "block" : "none";
+  });
+
+  // 📥 Load events
+  onSnapshot(collection(db,"events"), snap => {
+    eventsBox.innerHTML = "";
+
+    snap.forEach(d => {
+      const e = d.data();
+
+      let media = "";
+      if (e.media) {
+        if (e.media.includes("drive.google.com") || e.media.includes("youtube")) {
+          media = `<iframe src="${e.media}" height="250" allowfullscreen></iframe>`;
+        } else {
+          media = `<img src="${e.media}">`;
+        }
+      }
+
+      eventsBox.innerHTML += `
+        <div class="event-card">
+          <h3>${e.title || ""}</h3>
+          <p>${e.description || ""}</p>
+          ${media}
+          ${isAdmin ? `<button class="delete-btn" onclick="deleteEvent('${d.id}')">حذف</button>` : ""}
+        </div>
+      `;
+    });
+  });
+
+  // ➕ Add event
+  window.addEvent = async () => {
+    const title = document.getElementById("title").value;
+    const description = document.getElementById("description").value;
+    const media = document.getElementById("media").value;
+
+    if (!title) return alert("العنوان مطلوب");
+
+    await addDoc(collection(db,"events"), {
+      title,
+      description,
+      media
+    });
+
+    document.getElementById("title").value = "";
+    document.getElementById("description").value = "";
+    document.getElementById("media").value = "";
+  };
+
+  // 🗑 Delete event
+  window.deleteEvent = async (id) => {
+    if (!confirm("حذف الفعالية؟")) return;
+    await deleteDoc(doc(db,"events",id));
+  };
 </script>
 
 </body>
