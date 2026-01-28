@@ -38,6 +38,42 @@
 </footer>
 
 <script type="module">
+import { db } from "./firebase.js";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  increment
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const counterRef = doc(db, "stats", "visitors");
+const countEl = document.getElementById("visitorCount");
+
+if(!localStorage.getItem("visited")){
+  increaseCounter();
+  localStorage.setItem("visited","yes");
+}
+loadCounter();
+
+// زيادة العداد
+async function increaseCounter(){
+  await updateDoc(counterRef, {
+    count: increment(1)
+  });
+}
+
+// قراءة العدد
+async function loadCounter(){
+  const snap = await getDoc(counterRef);
+  if(snap.exists()){
+    countEl.textContent = snap.data().count;
+  }
+}
+
+increaseCounter();
+loadCounter();
+
+
 import { db, watchAdmin, deleteData } from "./firebase.js";
 import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
