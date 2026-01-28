@@ -3,82 +3,161 @@
 <head>
 <meta charset="UTF-8">
 <title>لوحة التحكم</title>
+
 <style>
-body{font-family:Tahoma;padding:20px}
-.card{border:1px solid #ccc;padding:10px;margin:10px 0}
-iframe,img{width:100%;max-height:300px}
-button{margin-top:5px}
+body{
+  font-family:Tahoma;
+  padding:20px;
+  background:#f4f4f4;
+}
+
+.card{
+  border:1px solid #ccc;
+  padding:10px;
+  margin:10px 0;
+  background:#fff;
+  border-radius:8px;
+}
+
+iframe,img{
+  width:100%;
+  max-height:300px;
+  margin-top:8px;
+  border-radius:6px;
+}
+
+button{
+  margin-top:5px;
+  padding:6px 12px;
+  cursor:pointer;
+}
+
+select,input,textarea{
+  width:100%;
+  margin:5px 0;
+  padding:8px;
+}
+
+h3{margin-top:30px}
+
+.delete{
+  background:#e53935;
+  color:#fff;
+  border:none;
+  border-radius:5px;
+}
 </style>
 </head>
+
 <body>
 
 <h1>لوحة الإدارة</h1>
-<button onclick="location.href='index.html'">الرئيسية</button>
+<button onclick="location.href='index.html'">العودة للرئيسية</button>
 
-<h2>إضافة محتوى</h2>
+<hr>
+
+<h2>➕ إضافة محتوى</h2>
+
 <input id="title" placeholder="العنوان">
 <textarea id="content" placeholder="المحتوى"></textarea>
-<input id="media" placeholder="رابط صورة أو فيديو">
+<input id="media" placeholder="رابط صورة أو فيديو (Drive / YouTube)">
+
 <select id="type">
-<option value="news">الأخبار</option>
-<option value="talents">المواهب</option>
-<option value="achievements">الإنجازات</option>
+  <option value="events">الفعاليات</option>
+  <option value="parents">همسات ولي الأمر</option>
+  <option value="rules">القوانين</option>
 </select>
+
 <button id="addBtn">إضافة</button>
 <p id="msg"></p>
 
-<h2>إدارة المحتوى</h2>
+<hr>
+
+<h2>📂 إدارة المحتوى</h2>
 <div id="container"></div>
 
+<!-- Firebase -->
 <script type="module">
 import {
-  db, addData, deleteData, watchAdmin, normalizeVideoLink
+  db,
+  addData,
+  deleteData,
+  watchAdmin,
+  normalizeVideoLink
 } from "./firebase.js";
-import { collection, onSnapshot } from
-"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+import { collection, onSnapshot }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* 🔐 حماية الأدمن */
 watchAdmin(isAdmin=>{
   if(!isAdmin) location.href="admin-login.html";
 });
 
+/* ➕ إضافة */
 addBtn.onclick = async () => {
   const link = media.value.trim();
   const video = normalizeVideoLink(link);
 
   await addData(type.value,{
-    title:title.value,
-    content:content.value,
-    image: link.match(/\.(jpg|png|jpeg)$/i) ? link : "",
+    title: title.value,
+    content: content.value,
+    image: link.match(/\.(jpg|jpeg|png)$/i) ? link : "",
     video: video.includes("preview") || video.includes("embed") ? video : ""
   });
 
-  title.value=content.value=media.value="";
-  msg.textContent="تمت الإضافة ✅";
+  title.value = "";
+  content.value = "";
+  media.value = "";
+  msg.textContent = "تمت الإضافة ✅";
 };
 
-["news","talents","achievements"].forEach(col=>{
+/* 📡 مراقبة البيانات */
+["events","parents","rules"].forEach(col=>{
   onSnapshot(collection(db,col), snap=>{
     render(col, snap.docs.map(d=>({id:d.id,...d.data()})));
   });
 });
 
+/* 🖥️ عرض */
 function render(col, items){
-  container.innerHTML += `<h3>${col}</h3>`;
+  const sectionId = `sec-${col}`;
+  let section = document.getElementById(sectionId);
+
+  if(!section){
+    section = document.createElement("div");
+    section.id = sectionId;
+    container.appendChild(section);
+  }
+
+  section.innerHTML = `<h3>${getTitle(col)}</h3>`;
+
   items.forEach(i=>{
-    container.innerHTML += `
+    section.innerHTML += `
       <div class="card">
-        <strong>${i.title}</strong>
-        <p>${i.content}</p>
-        ${i.image?`<img src="${i.image}">`:""}
-        ${i.video?`<iframe src="${i.video}" allowfullscreen></iframe>`:""}
-        <button onclick="del('${col}','${i.id}')">🗑 حذف</button>
-      </div>`;
+        <strong>${i.title || ""}</strong>
+        <p>${i.content || ""}</p>
+        ${i.image ? `<img src="${i.image}">` : ""}
+        ${i.video ? `<iframe src="${i.video}" allowfullscreen></iframe>` : ""}
+        <button class="delete" onclick="del('${col}','${i.id}')">🗑 حذف</button>
+      </div>
+    `;
   });
 }
 
+/* 🗑 حذف */
 window.del = async (c,id)=>{
-  if(confirm("حذف؟")) await deleteData(c,id);
+  if(confirm("هل تريد الحذف؟")){
+    await deleteData(c,id);
+  }
 };
+
+/* 🏷️ عناوين */
+function getTitle(col){
+  if(col==="events") return "📅 الفعاليات";
+  if(col==="parents") return "👨‍👩‍👧 همسات ولي الأمر";
+  if(col==="rules") return "📜 القوانين";
+}
 </script>
 
 </body>
