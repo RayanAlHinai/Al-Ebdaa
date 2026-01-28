@@ -2,129 +2,83 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>لوحة الإدارة المتكاملة</title>
+<title>لوحة التحكم</title>
 <style>
-body { font-family: Tahoma, sans-serif; padding:20px; }
-h2 { margin-top:40px; }
-input, textarea, select, button { display:block; margin:10px 0; padding:8px; width:300px; }
-button { width:auto; cursor:pointer; }
-.card { border:1px solid #ccc; padding:10px; border-radius:8px; margin:10px 0; }
-.card img, .card iframe { width:100%; max-height:300px; margin-top:5px; }
-.delete-btn { background:red; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:5px; margin-top:5px; }
+body{font-family:Tahoma;padding:20px}
+.card{border:1px solid #ccc;padding:10px;margin:10px 0}
+iframe,img{width:100%;max-height:300px}
+button{margin-top:5px}
 </style>
 </head>
 <body>
 
-<h1>لوحة الإدارة المتكاملة</h1>
-<button id="homeBtn">الرجوع للرئيسية</button>
+<h1>لوحة الإدارة</h1>
+<button onclick="location.href='index.html'">الرئيسية</button>
 
-<section>
-  <h2>إضافة محتوى جديد</h2>
-  <input id="title" placeholder="العنوان">
-  <textarea id="content" placeholder="المحتوى"></textarea>
-  <input id="media" placeholder="رابط الصورة أو الفيديو">
-  <select id="type">
-    <option value="news">الأخبار</option>
-    <option value="talents">المواهب</option>
-    <option value="achievements">الإنجازات</option>
-  </select>
-  <button id="addBtn">إضافة</button>
-  <p id="msg" style="color:green;"></p>
-</section>
+<h2>إضافة محتوى</h2>
+<input id="title" placeholder="العنوان">
+<textarea id="content" placeholder="المحتوى"></textarea>
+<input id="media" placeholder="رابط صورة أو فيديو">
+<select id="type">
+<option value="news">الأخبار</option>
+<option value="talents">المواهب</option>
+<option value="achievements">الإنجازات</option>
+</select>
+<button id="addBtn">إضافة</button>
+<p id="msg"></p>
 
-<section>
-  <h2>إدارة المحتوى</h2>
-  <div id="contentContainer"></div>
-</section>
+<h2>إدارة المحتوى</h2>
+<div id="container"></div>
 
 <script type="module">
-import { db, addData, deleteData, watchAdmin } from "./firebase.js";
-import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  db, addData, deleteData, watchAdmin, normalizeVideoLink
+} from "./firebase.js";
+import { collection, onSnapshot } from
+"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const title = document.getElementById("title");
-const content = document.getElementById("content");
-const media = document.getElementById("media");
-const type = document.getElementById("type");
-const msg = document.getElementById("msg");
-const addBtn = document.getElementById("addBtn");
-const container = document.getElementById("contentContainer");
-const homeBtn = document.getElementById("homeBtn");
-
-let isAdmin = false;
-let currentData = { news: [], talents: [], achievements: [] };
-
-// مراقبة حالة الأدمن
-watchAdmin(status => {
-  isAdmin = status;
-  renderAll(currentData);
+watchAdmin(isAdmin=>{
+  if(!isAdmin) location.href="admin-login.html";
 });
 
-// زر الرجوع
-homeBtn.addEventListener("click", () => location.href="index.html");
-
-// زر الإضافة
-addBtn.addEventListener("click", async () => {
+addBtn.onclick = async () => {
   const link = media.value.trim();
-  const newItem = {
-    title: title.value,
-    content: content.value,
+  const video = normalizeVideoLink(link);
+
+  await addData(type.value,{
+    title:title.value,
+    content:content.value,
     image: link.match(/\.(jpg|png|jpeg)$/i) ? link : "",
-    video: (link.includes("youtube") || link.endsWith(".mp4")) ? link : ""
-  };
+    video: video.includes("preview") || video.includes("embed") ? video : ""
+  });
 
-  await addData(type.value, newItem);
+  title.value=content.value=media.value="";
+  msg.textContent="تمت الإضافة ✅";
+};
 
-  // مسح الحقول
-  title.value = "";
-  content.value = "";
-  media.value = "";
-  msg.textContent = `تمت الإضافة إلى ${type.value} ✅`;
+["news","talents","achievements"].forEach(col=>{
+  onSnapshot(collection(db,col), snap=>{
+    render(col, snap.docs.map(d=>({id:d.id,...d.data()})));
+  });
 });
 
-// دالة لرسم قسم معين
-function renderSection(sectionName, items) {
-  if(items.length === 0) return `<h3>${sectionName}</h3><p>لا يوجد محتوى حتى الآن.</p>`;
-  return `<h3>${sectionName}</h3>` + items.map(item => {
-    let mediaHTML = "";
-    if(item.image) mediaHTML = `<img src="${item.image}">`;
-    else if(item.video) mediaHTML = `<iframe src="${item.video}" width="100%" height="200" allowfullscreen></iframe>`;
-    return `<div class="card" data-id="${item.id}" data-type="${sectionName}">
-      <strong>${item.title}</strong>
-      <p>${item.content}</p>
-      ${mediaHTML}
-      ${isAdmin ? `<button class="delete-btn">🗑 حذف</button>` : ""}
-    </div>`;
-  }).join("");
-}
-
-// إعادة رسم كل الأقسام
-function renderAll(data) {
-  container.innerHTML = "";
-  ["news","talents","achievements"].forEach(sec => {
-    container.innerHTML += renderSection(sec, data[sec]);
+function render(col, items){
+  container.innerHTML += `<h3>${col}</h3>`;
+  items.forEach(i=>{
+    container.innerHTML += `
+      <div class="card">
+        <strong>${i.title}</strong>
+        <p>${i.content}</p>
+        ${i.image?`<img src="${i.image}">`:""}
+        ${i.video?`<iframe src="${i.video}" allowfullscreen></iframe>`:""}
+        <button onclick="del('${col}','${i.id}')">🗑 حذف</button>
+      </div>`;
   });
 }
 
-// **Event Delegation** لزر الحذف
-container.addEventListener("click", async (e) => {
-  if(e.target.classList.contains("delete-btn")) {
-    const card = e.target.closest(".card");
-    const id = card.dataset.id;
-    const section = card.dataset.type;
-    if(confirm("هل تريد الحذف؟")) {
-      await deleteData(section, id);
-    }
-  }
-});
-
-// مراقبة Firebase لكل قسم مباشرة (onSnapshot)
-["news","talents","achievements"].forEach(section => {
-  const col = collection(db, section);
-  onSnapshot(col, snapshot => {
-    currentData[section] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderAll(currentData);
-  });
-});
+window.del = async (c,id)=>{
+  if(confirm("حذف؟")) await deleteData(c,id);
+};
 </script>
 
 </body>
