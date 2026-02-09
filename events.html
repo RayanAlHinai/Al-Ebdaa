@@ -14,34 +14,43 @@
   display:inline-block;
   vertical-align:top;
 }
-.card img, .card video {
+.card img, .card video, .card iframe {
   width:100%;
   max-height:400px;
   margin-top:10px;
   border-radius:10px;
 }
+.delete-btn {
+  background:red;
+  color:white;
+  border:none;
+  padding:6px 12px;
+  border-radius:6px;
+  cursor:pointer;
+  margin-top:10px;
+}
 </style>
 </head>
+
 <body>
 
 <header>
   <img src="assets/logo2.png" class="logo-left">
   <img src="assets/logo1.png" class="logo-right">
-  <h1>🌟 الفعاليات</h1>
+  <h1>📅 الفعاليات</h1>
 </header>
 
 <nav>
   <a href="index.html">الرئيسية</a>
   <a href="parents.html">همسات لولي الأمر</a>
-  <a href="rules.html">اللائحة قوانين </a>
+  <a href="rules.html">اللائحة قوانين</a>
   <a href="talents.html">المواهب</a>
-
   <a href="admin-login.html" class="admin-btn">تسجيل دخول</a>
 </nav>
 
 <section>
-  <h2>عرض الفعاليات</h2>
-  <div id="talentsContent"></div>
+  <h2>فعاليات المدرسة</h2>
+  <div id="eventsContent"></div>
 </section>
 
 <footer>
@@ -50,9 +59,10 @@
 
 <script type="module">
 import { db, watchAdmin, deleteData } from "./firebase.js";
-import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot } from
+"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const container = document.getElementById("talentsContent");
+const container = document.getElementById("eventsContent");
 let isAdmin = false;
 
 // مراقبة حالة الأدمن
@@ -60,32 +70,38 @@ watchAdmin(status => {
   isAdmin = status;
 });
 
-function renderTalents(talents) {
+// رسم الفعاليات
+function renderEvents(events) {
   container.innerHTML = "";
-  if(talents.length === 0) {
-    container.innerHTML = "<p>لا توجد مواهب حتى الآن.</p>";
+
+  if(events.length === 0) {
+    container.innerHTML = "<p>لا توجد فعاليات حتى الآن.</p>";
     return;
   }
 
-  talents.forEach(t => {
+  events.forEach(e => {
     const card = document.createElement("div");
     card.className = "card";
 
     let media = "";
-    if(t.image) media = `<img src="${t.image}">`;
-    else if(t.video) media = `<iframe src="${t.video}" width="100%" height="300" allowfullscreen></iframe>`;
+    if(e.image) {
+      media = `<img src="${e.image}">`;
+    } else if(e.video) {
+      media = `<iframe src="${e.video}" height="300" allowfullscreen></iframe>`;
+    }
 
     card.innerHTML = `
-      <h3>${t.title}</h3>
-      <p>${t.content}</p>
+      <h3>${e.title}</h3>
+      <p>${e.content}</p>
       ${media}
       ${isAdmin ? `<button class="delete-btn">🗑 حذف</button>` : ""}
     `;
 
+    // زر الحذف للأدمن فقط
     if(isAdmin && card.querySelector(".delete-btn")) {
       card.querySelector(".delete-btn").onclick = async () => {
-        if(confirm("هل تريد الحذف؟")) {
-          await deleteData("talents", t.id);
+        if(confirm("هل تريد حذف هذه الفعالية؟")) {
+          await deleteData("events", e.id);
         }
       };
     }
@@ -94,11 +110,16 @@ function renderTalents(talents) {
   });
 }
 
-const talentsCol = collection(db, "talents");
-onSnapshot(talentsCol, snapshot => {
-  const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  renderTalents(data);
+// مراقبة الفعاليات مباشرة من Firebase
+const eventsCol = collection(db, "events");
+onSnapshot(eventsCol, snapshot => {
+  const data = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+  renderEvents(data);
 });
 </script>
+
 </body>
 </html>
